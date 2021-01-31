@@ -1,3 +1,4 @@
+#开发环境
 """
 Django settings for Time_mall project.
 
@@ -53,8 +54,9 @@ ROOT_URLCONF = 'Time_mall.urls'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        # 'BACKEND': 'django.template.backends.django.DjangoTemplates', #默认模板引擎
+        'BACKEND': 'django.template.backends.jinja2.jinja2',#jinja2模板渲染引擎
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -63,6 +65,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'environment':'Time_mall.utils.jinja2_env.jinja2_env',#jinja2模板渲染引擎环境
         },
     },
 ]
