@@ -82,6 +82,7 @@ WSGI_APPLICATION = 'Time_mall.wsgi.application'
 #         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 #     }
 # }
+#Mysql数据库
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -92,7 +93,25 @@ DATABASES = {
         'PASSWORD': 'liujun'
     }
 }
-
+#Redis数据库
+CACHES = {
+    "default": { # 默认的Redis配置项，采用0号Redis库。
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "session": { # 状态保持的Redis配置项，采用1号Redis库。
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "session"
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
 
