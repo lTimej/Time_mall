@@ -8,6 +8,16 @@ from django import http
 
 from users.models import User
 # Create your views here.
+#用户名重复校验
+class UsernameRepetition(View):
+    def get(self,request,username):
+        count = User.objects.filter(username=username).count()
+        return http.JsonResponse({"count":count})
+
+class PhoneRepetition(View):
+    def get(self,request,phone):
+        count = User.objects.filter(phone=phone).count()
+        return http.JsonResponse({"count":count})
 
 class RegisterView(View):
     def get(self,request):
@@ -27,8 +37,8 @@ class RegisterView(View):
         password2 = request.POST.get('password2')
         mobile = request.POST.get('mobile')
         allow = request.POST.get('allow')
-        print(username,password,password2,mobile)
-        #2、校验参数
+
+        #2、校验参数  防止恶意访问网站 比如爬虫
             #参数是否都存在
         if not all([username,password,password2,mobile,allow]):
             return http.HttpResponseForbidden("缺少必传参数")
