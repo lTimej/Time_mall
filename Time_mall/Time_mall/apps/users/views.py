@@ -11,11 +11,23 @@ from users.models import User
 #用户名重复校验
 class UsernameRepetition(View):
     def get(self,request,username):
+        '''
+        :param request:前端通过ajax请求后端用户名数据数据，返回用户名个数给前端
+        :param username: 前端输入框的参数
+        :return: json数据
+        '''
+        #返回用户名个数
         count = User.objects.filter(username=username).count()
         return http.JsonResponse({"count":count})
-
+#手机号重复校验
 class PhoneRepetition(View):
     def get(self,request,phone):
+        '''
+        :param request:
+        :param username: 前端输入框的参数
+        :return: json数据
+                '''
+        # 返回手机号个数
         count = User.objects.filter(phone=phone).count()
         return http.JsonResponse({"count":count})
 
@@ -70,7 +82,7 @@ class RegisterView(View):
                 password=password,
                 phone=mobile
             )
-
+        #写入失败就抛出异常
         except DatabaseError:
             return render(request,'register.html',{"register_error":"注册失败"})
         #4、重定向页面
