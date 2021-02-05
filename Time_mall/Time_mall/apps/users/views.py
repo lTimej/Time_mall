@@ -5,6 +5,7 @@ from django.shortcuts import render,redirect
 from django.urls import reverse
 from django.views import View
 from django import http
+from django_redis import get_redis_connection
 
 from users.models import User
 # Create your views here.
@@ -29,6 +30,7 @@ class PhoneRepetition(View):
                 '''
         # 返回手机号个数
         count = User.objects.filter(phone=phone).count()
+        #返回响应
         return http.JsonResponse({"count":count})
 
 class RegisterView(View):
@@ -48,6 +50,7 @@ class RegisterView(View):
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
         mobile = request.POST.get('mobile')
+        sms_code = request.POST.get('sms_code')
         allow = request.POST.get('allow')
 
         #2、校验参数  防止恶意访问网站 比如爬虫
@@ -85,6 +88,21 @@ class RegisterView(View):
         #写入失败就抛出异常
         except DatabaseError:
             return render(request,'register.html',{"register_error":"注册失败"})
+
+        #后端对短信验证码进行验证
+        #链接redis数据库
+        redis_conn = get_redis_connection('verify_code')
+
+        #如果Redis服务端需要同时处理多个请求，加上网络延迟，那么服务端利用率不高，效率降低。
+        #获取短信验证码
+        redis_sms_code = redis_conn.get('sms_%s'%mobile)
+        #校验验证码是否存在
+        if not redis_sms_code:
+            return render(request, 'register.html', {"register_error": "短信验证码失效"})
+        #校验验证码是否正确
+        if redis_sms_code.decode() != sms_code:
+            return render(request, 'register.html', {"register_error": "短信输入错误"})
+
         #4、重定向页面
         return redirect(reverse('contents:index'))#reverse反向解析
         # return http.HttpResponse('注册成功，重定向到首页')
