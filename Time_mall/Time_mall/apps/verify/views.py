@@ -71,18 +71,17 @@ class SmsCodeView(View):
 
         # 链接redis数据库
         redis_conn = get_redis_connection('verify_code')
-        pipe = redis_conn.pipeline()
 
         #如果Redis服务端需要同时处理多个请求，加上网络延迟，那么服务端利用率不高，效率降低。
         #获取验证码
-        img_code_redis = pipe.get('img_%s'%uuid)
+        img_code_redis = redis_conn.get('img_%s'%uuid)
 
         #校验验证码是否存在
         if not img_code_redis:
             return http.JsonResponse({'code': response_code.RETCODE.IMAGECODEERR, "errmsg": "验证码失效"})
 
         try:#取出uuid后，删除对应的uuid验证码，防止用户恶意测试
-            pipe.delete('img_%s'%uuid)
+            redis_conn.delete('img_%s'%uuid)
         except Exception as e:
             #删除失败存入日志  uuid不存在，删除失败
             logger.error(e)
@@ -102,7 +101,7 @@ class SmsCodeView(View):
         logger.info("短信验证码：%s"% sms_code)
 
         # 保存至redis数据库 生命为60秒
-        pipe.setex("sms_%s" % phone, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
+        redis_conn.setex("sms_%s" % phone, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
 
         # 容联云通讯发送短信
         # to用户  datas[验证码内容,终止时间]，tempId模板id
@@ -111,14 +110,14 @@ class SmsCodeView(View):
 
         # 防止恶意用户不通过点击按钮发送短信，通过链接频繁发送短信
         #第一次发送sms_code_flag为空，然后将flag存入redis设置flag60秒,与前端时间同步，
-        sms_code_flag = pipe.get('sms_code_flag_%s' % phone)
+        sms_code_flag = redis_conn.get('sms_code_flag_%s' % phone)
 
         #如果flag存在抛出错误
         if sms_code_flag:
             return http.JsonResponse({'code': response_code.RETCODE.THROTTLINGERR , "errmsg": "发送过于频繁"})
 
         #不存在就写入
-        pipe.setex("sms_code_flag_%s"%phone,constants.SEND_SMS_CODE_INTERVAL,1)
+        redis_conn.setex("sms_code_flag_%s"%phone,constants.SEND_SMS_CODE_INTERVAL,1)
 
         #响应正确
         return http.JsonResponse({'code': response_code.RETCODE.OK, "errmsg": "发送成功"})
