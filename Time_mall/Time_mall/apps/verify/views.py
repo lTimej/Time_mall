@@ -6,7 +6,7 @@ from django import http
 
 from .libs.captcha.captcha import captcha
 from Time_mall.utils import constants,response_code
-from .libs.yuntongxun.ccp_sms import CCP
+from celery_tasks.sms_code.tasks import send_sms_code
 
 from django_redis import get_redis_connection
 logger = logging.getLogger('django')
@@ -103,11 +103,6 @@ class SmsCodeView(View):
         # 保存至redis数据库 生命为60秒
         redis_conn.setex("sms_%s" % phone, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
 
-        # 容联云通讯发送短信
-        # to用户  datas[验证码内容,终止时间]，tempId模板id
-        CCP().send_template_sms(to=phone, datas=[sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60],
-                              tempId=constants.SEND_SMS_TEMPLATE_ID)
-
         # 防止恶意用户不通过点击按钮发送短信，通过链接频繁发送短信
         #第一次发送sms_code_flag为空，然后将flag存入redis设置flag60秒,与前端时间同步，
         sms_code_flag = redis_conn.get('sms_code_flag_%s' % phone)
@@ -118,6 +113,11 @@ class SmsCodeView(View):
 
         #不存在就写入
         redis_conn.setex("sms_code_flag_%s"%phone,constants.SEND_SMS_CODE_INTERVAL,1)
+
+        # 容联云通讯发送短信
+        # to用户  datas[验证码内容,终止时间]，tempId模板id
+        #消息队列异步请求，防止请求出现阻塞，而导致前端计时延迟
+        send_sms_code.delay(phone,sms_code)
 
         #响应正确
         return http.JsonResponse({'code': response_code.RETCODE.OK, "errmsg": "发送成功"})

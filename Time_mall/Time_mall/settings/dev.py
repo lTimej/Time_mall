@@ -14,8 +14,11 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+import sys
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0,os.path.join(BASE_DIR,'apps'))
+print("导包路径",sys.path)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -38,14 +41,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',#跨请求管理sessions
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',#使用会话将用户与请求关联起来
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -55,7 +59,7 @@ ROOT_URLCONF = 'Time_mall.urls'
 TEMPLATES = [
     {
         # 'BACKEND': 'django.template.backends.django.DjangoTemplates', #默认模板引擎
-        'BACKEND': 'django.template.backends.jinja2.jinja2',#jinja2模板渲染引擎
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',#jinja2模板渲染引擎
         'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -65,7 +69,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            'environment':'Time_mall.utils.jinja2_env.jinja2_env',#jinja2模板渲染引擎环境
+            'environment':'Time_mall.utils.jinja2_env.jinja2_envronment',#jinja2模板渲染引擎环境
         },
     },
 ]
@@ -109,6 +113,13 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    "verify_code": { # 验证码，采用2号Redis库。
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
@@ -134,9 +145,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-Hans'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -178,7 +191,7 @@ LOGGING = {
         'file': {  # 向文件中输出日志
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(os.path.dirname(BASE_DIR), 'logs/meiduo.log'),  # 日志文件的位置
+            'filename': os.path.join(os.path.dirname(BASE_DIR), 'logs/Time_mall.log'),  # 日志文件的位置
             'maxBytes': 300 * 1024 * 1024,
             'backupCount': 10,
             'formatter': 'verbose'
@@ -192,3 +205,17 @@ LOGGING = {
         },
     }
 }
+'''
+用户认证系统中的用户模型类，是通过全局配置项 AUTH_USER_MODEL 决定的。
+如果迁移自定义用户模型类，必须先配置 AUTH_USER_MODEL 。
+'''
+#用户认证模型类
+AUTH_USER_MODEL = 'users.User'
+
+# Celery配置
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/10'
+#: Only add pickle to this list if your broker is secured
+#: from unwanted access (see userguide/security.html)
+CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
+CELERY_TASK_SERIALIZER = 'json'
