@@ -1,5 +1,7 @@
 import re
 
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import login,authenticate
 from django.db import DatabaseError
 from django.shortcuts import render,redirect
 from django.urls import reverse
@@ -8,11 +10,11 @@ from django import http
 from django_redis import get_redis_connection
 
 from users.models import User
-# Create your views here.
-#用户名重复校验
+
 class UsernameRepetition(View):
     def get(self,request,username):
         '''
+        用户名重复校验
         :param request:前端通过ajax请求后端用户名数据数据，返回用户名个数给前端
         :param username: 前端输入框的参数
         :return: json数据
@@ -20,10 +22,11 @@ class UsernameRepetition(View):
         #返回用户名个数
         count = User.objects.filter(username=username).count()
         return http.JsonResponse({"count":count})
-#手机号重复校验
+
 class PhoneRepetition(View):
     def get(self,request,phone):
         '''
+        手机号重复校验
         :param request:
         :param username: 前端输入框的参数
         :return: json数据
@@ -36,6 +39,7 @@ class PhoneRepetition(View):
 class RegisterView(View):
     def get(self,request):
         '''
+        用户注册
         :param request:
         :return: 展示注册页面
         '''
@@ -107,3 +111,45 @@ class RegisterView(View):
         return redirect(reverse('contents:index'))#reverse反向解析
         # return http.HttpResponse('注册成功，重定向到首页')
 
+class LoginView(View):
+    def get(self,request):
+        '''
+        用户登录
+        :param request: get请求
+        :return: 登录界面
+        '''
+        return render(request,"login.html")
+    def post(self,request):
+        '''
+        :param request: post
+        :return:
+        '''
+        #获取参数
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        remembered = request.POST.get("remembered")
+        #校验参数
+        #判断参数是否齐全
+        if not all([username,password]):
+            return http.HttpResponseForbidden("参数不全")
+        #用户名是否为4-16位
+        if not re.match("^[0-9a-zA-Z]{4,16}$",username):
+            return http.HttpResponseForbidden("用户名必须为4-16为")
+        #密码是否为8-16位
+        if not re.match("^[0-9A-Za-z]{8,16}$",password):
+            return http.HttpResponseForbidden("密码必须为8-16为")
+        #用户名和密码校验
+        user = authenticate(username=username,password=password)
+        #返回None，用户名或密码出错，重新返回到登录页面
+        if not user:
+            return render(request,"login.html",{"login_errmsg":"用户名或密码输入不正确"})
+        #认证成功，实现状态保持
+        login(request,user)
+        #没有记住用户，设置session周期为0
+        if not remembered:
+            request.session.set_expiry(0)
+        else:#默认周期为14天
+            request.session.set_expiry(None)
+        print(user)
+        #重定向首页
+        return redirect(reverse("contents:index"))

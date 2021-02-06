@@ -11,6 +11,12 @@ app.autodiscover_tasks(['celery_tasks.sms_code'])
 
 celery启动进程
 celery -A 启动文件（main.py） worker -l INFO
+-A指对应的应用程序, 其参数是项目中 Celery实例的位置。
+worker指这里要启动的worker。
+-l指日志等级，比如info等级。
+
+#Celery异步发送短信验证码
+ccp_send_sms_code.delay(mobile, sms_code)
 
 
 

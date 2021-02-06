@@ -29,7 +29,7 @@ SECRET_KEY = '+ny2=6v+=@%703$1sej58tmm4f(g6c1r((-+$g(n2x#6bfll=y'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -208,9 +208,11 @@ LOGGING = {
 '''
 用户认证系统中的用户模型类，是通过全局配置项 AUTH_USER_MODEL 决定的。
 如果迁移自定义用户模型类，必须先配置 AUTH_USER_MODEL 。
+自定义django类必须进行配置文件中进行 注册
 '''
 #用户认证模型类
 AUTH_USER_MODEL = 'users.User'
+AUTHENTICATION_BACKENDS = ['users.utils.MyAuthenticate']
 
 # Celery配置
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/10'
