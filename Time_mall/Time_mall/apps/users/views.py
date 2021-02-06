@@ -1,7 +1,7 @@
 import re
 
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth import login,authenticate
+from django.contrib.auth import login,authenticate,logout
 from django.db import DatabaseError
 from django.shortcuts import render,redirect
 from django.urls import reverse
@@ -144,7 +144,7 @@ class LoginView(View):
         #返回None，用户名或密码出错，重新返回到登录页面
         if not user:
             return render(request,"login.html",{"login_errmsg":"用户名或密码输入不正确"})
-        #认证成功，实现状态保持
+        #认证成功，实现状态保持,加入session
         login(request,user)
         #没有记住用户，设置session周期为0
         if not remembered:
@@ -157,4 +157,15 @@ class LoginView(View):
 
         #将用户名存入cookies中
         response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
+        return response
+
+class LogoutView(View):
+    def get(self,request):
+        #清理session
+        logout(request)
+        #重定向至首页
+        response = redirect(reverse("contents:index"))
+        #删除cookie
+        response.delete_cookie("username")
+        #返回
         return response
