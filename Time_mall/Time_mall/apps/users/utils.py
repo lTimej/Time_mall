@@ -15,7 +15,7 @@ def get_user(user):
         if re.match("^1[3-9]\d{9}$",user):#手机号登录
             user = User.objects.get(phone=user)
         else:#用户名登录
-            user = User.objects.get(user)
+            user = User.objects.get(username=user)
     except User.DoesNotExist:#不存在返回None
         return None
 

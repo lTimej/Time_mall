@@ -10,6 +10,7 @@ from django import http
 from django_redis import get_redis_connection
 
 from users.models import User
+from Time_mall.utils import constants,response_code
 
 class UsernameRepetition(View):
     def get(self,request,username):
@@ -152,4 +153,8 @@ class LoginView(View):
             request.session.set_expiry(None)
         print(user)
         #重定向首页
-        return redirect(reverse("contents:index"))
+        response = redirect(reverse("contents:index"))
+
+        #将用户名存入cookies中
+        response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
+        return response
