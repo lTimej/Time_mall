@@ -8,9 +8,11 @@ from django.urls import reverse
 from django.views import View
 from django import http
 from django_redis import get_redis_connection
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from users.models import User
 from Time_mall.utils import constants,response_code
+from Time_mall.utils.view import MyLoginRequiredMixin
 
 class UsernameRepetition(View):
     def get(self,request,username):
@@ -153,8 +155,13 @@ class LoginView(View):
             request.session.set_expiry(None)
         print(user)
         #重定向首页
-        response = redirect(reverse("contents:index"))
-
+        next = request.GET.get("next")
+        # 指定未登录用户重定向的地址
+        # 登录时next参数的作用是为了方便用户从哪里进入到登录页面，登录成功后就回到哪里。
+        if next:#不为空，则重定向到指定的页面
+            response = redirect(next)
+        else:#重定向到首页
+            response = redirect(reverse("contents:index"))
         #将用户名存入cookies中
         response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
         return response
@@ -169,3 +176,9 @@ class LogoutView(View):
         response.delete_cookie("username")
         #返回
         return response
+
+class UserInfoView(LoginRequiredMixin,View):
+    def get(self,request):
+        print(99999999999999)
+
+        return render(request,'user_info.html')

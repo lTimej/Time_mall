@@ -11,7 +11,7 @@
 </head>
 <body>
 	<div id="app">
-	<div class="header_con">
+	<div class="header_con" v-cloak>
 		<div class="header">
 			<div class="welcome fl">欢迎来到Time商城!</div>
 			<div class="fr">
@@ -19,19 +19,19 @@
 					欢迎您：<em>传智播客</em>
 					<a href="javascript:;" class="quit">退出</a>
 				</div>
-				<div class="login_btn fl" v-if="username" v-cloak>
+				<div class="login_btn fl" v-if="username" >
                     <a href="javascript:;">[[username]]</a>
                     <span>|</span>
 					<a href="{{ url('users:logout') }}">退出</a>
 				</div>
-                <div class="login_btn fl" v-else v-cloak>
+                <div class="login_btn fl" v-else>
                     <a href="{{ url("users:login") }}">登录</a>
                     <span>|</span>
 					<a href='{{ url("users:register") }}'>注册</a>
 				</div>
 				<div class="user_link fl">
 					<span>|</span>
-					<a href="#">用户中心</a>
+					<a href="{{ url('users:userinfo') }}">用户中心</a>
 					<span>|</span>
 					<a href="#">我的购物车</a>
 					<span>|</span>
@@ -41,7 +41,7 @@
 		</div>		
 	</div>
 	<div class="search_bar clearfix">
-		<a href="index.html" class="logo fl"><img src="{{ static('images/logo11.png') }}"></a>
+		<a href="index.html" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
 		<div class="search_wrap fl">
 			<form method="get" action="#" class="search_con">
                 <input type="text" class="input_text fl" name="q" placeholder="搜索商品">

@@ -214,6 +214,9 @@ LOGGING = {
 AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = ['users.utils.MyAuthenticate']
 
+#指定用户重定向地址
+LOGIN_URL = "/login/"
+
 # Celery配置
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/10'
 #: Only add pickle to this list if your broker is secured
@@ -221,3 +224,4 @@ CELERY_BROKER_URL = 'redis://127.0.0.1:6379/10'
 CELERY_ACCEPT_CONTENT = ['json']
 # CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
 CELERY_TASK_SERIALIZER = 'json'
+
