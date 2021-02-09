@@ -258,4 +258,8 @@ class EmailVerifyView(View):
             logger.error(e)
             return http.HttpResponseServerError("存储失败")
         #重定向userinfo
-        return redirect(reversed('users:userinfo'))
+        return redirect(reverse('users:userinfo'))
+
+class AddressView(View):
+    def get(self,request):
+        return render(request,'user_address.html')
