@@ -1,8 +1,13 @@
 import re
 
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import BadData
+
+from Time_mall.utils import constants
 from users.models import User
 
 from django.contrib.auth.backends import ModelBackend
+from django.conf import settings
 '''
 重写ModelBackend的authenticate函数，来判断用户帐号是手机号登录还是用户名登录
 '''
@@ -41,3 +46,26 @@ class MyAuthenticate(ModelBackend):
         if user.check_password(password) and user:
             #用户对象
             return user
+def get_email_info(token):
+    serializer = Serializer(settings.SECRET_KEY, constants.VERIFY_EMAIL_TOKEN_EXPIRES)
+    try:
+        data = serializer.loads(token)
+    except BadData:
+        return None
+    else:
+        user_id = data.get("user_id")
+        email = data.get("email")
+        try:
+            user = User.objects.get(id=user_id,email=email)
+            return user
+        except User.DoesNotExist:
+            return None
+def generate_email_token(user):
+    serializer = Serializer(settings.SECRET_KEY, constants.VERIFY_EMAIL_TOKEN_EXPIRES)
+    data = {
+        "user_id":user.id,
+        "email":user.email
+    }
+    token = serializer.dumps(data).decode()
+    email_verify_url = settings.EMAIL_VERIFY_URL + "?token=" + token
+    return email_verify_url

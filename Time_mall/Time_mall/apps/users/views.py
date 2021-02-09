@@ -1,4 +1,5 @@
-import re
+import json
+import re,logging
 
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import login,authenticate,logout
@@ -13,6 +14,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from users.models import User
 from Time_mall.utils import constants,response_code
 from Time_mall.utils.view import MyLoginRequiredMixin
+from celery_tasks.email.tasks import send_verify_email
+from users.utils import generate_email_token, get_email_info
+
+logger = logging.getLogger('django')
 
 class UsernameRepetition(View):
     def get(self,request,username):
@@ -165,7 +170,7 @@ class LoginView(View):
         #将用户名存入cookies中
         response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
         return response
-
+#退出登录
 class LogoutView(View):
     def get(self,request):
         #清理session
@@ -177,8 +182,80 @@ class LogoutView(View):
         #返回
         return response
 
+#用户信息
 class UserInfoView(LoginRequiredMixin,View):
     def get(self,request):
-        print(99999999999999)
+        # username = request.COOKIES.get("username")
+        #获取前端所需要的参数
+        username = request.user.username
+        phone = request.user.phone
+        email = request.user.email
+        email_active = request.user.email_active
+        context = {
+            "username":username,
+            "phone":phone,
+            "email":email,
+            "email_active":email_active
+        }
+        #将数据传到前端
+        return render(request,'user_info.html',context)
 
-        return render(request,'user_info.html')
+class EmailView(MyLoginRequiredMixin,View):#用户登录才进行添加
+    def put(self,request):
+        '''
+        添加邮箱
+        :param request: put请求
+        :return: 响应状态码
+        '''
+        #获取参数
+        #获取邮箱，转换为字符类型
+        email_string = request.body
+        if not email_string:
+            return http.HttpResponseForbidden("邮箱格式不为空")
+        email_string = email_string.decode()
+        #转换成字典，取出email
+        email = json.loads(email_string).get("email")
+        #校验参数
+        if not re.match('^[0-9a-zA-Z]{1,16}@(qq|yeah|126|163)\.(net|cn|com)$',email):
+            return http.HttpResponseForbidden("邮箱格式不正确")
+        #保存数据库
+        try:
+            request.user.email = email
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '添加邮箱失败'})
+        #获取email验证url
+        verify_url = generate_email_token(request.user)
+        #异步发送
+        print(verify_url)
+        send_verify_email.delay(email,verify_url)
+        print(9999999999999)
+        #响应状态码
+        return http.JsonResponse({"code":response_code.RETCODE.OK,'errmsg':"邮箱发送成功"})
+
+class EmailVerifyView(View):
+    def get(self,request):
+        '''
+        邮箱验证
+        :param request:
+        :return:重定向用户信息界面
+        '''
+        #获取链接参数
+        token = request.GET.get("token")
+        #校验
+        if not token:
+            return http.HttpResponseForbidden("验证失败")
+        #解析链接参数
+        user = get_email_info(token)
+        #校验判断token是否过期
+        if not user:
+            return http.HttpResponseForbidden("验证已过期")
+        try:#更新用户邮箱激活状态
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError("存储失败")
+        #重定向userinfo
+        return redirect(reversed('users:userinfo'))
