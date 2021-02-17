@@ -11,7 +11,7 @@ from django import http
 from django_redis import get_redis_connection
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from users.models import User
+from users.models import User,Address
 from Time_mall.utils import constants,response_code
 from Time_mall.utils.view import MyLoginRequiredMixin
 from celery_tasks.email.tasks import send_verify_email
@@ -170,6 +170,7 @@ class LoginView(View):
         #将用户名存入cookies中
         response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
         return response
+
 #退出登录
 class LogoutView(View):
     def get(self,request):
@@ -260,6 +261,232 @@ class EmailVerifyView(View):
         #重定向userinfo
         return redirect(reverse('users:userinfo'))
 
+#收货地址
 class AddressView(View):
     def get(self,request):
-        return render(request,'user_address.html')
+        curr_user_obj = request.user
+        addresses = Address.objects.filter(user_id=curr_user_obj.id,is_deleted=False)
+        address_dict_list = []
+        for address in addresses:
+            address_dict = {
+                "id": address.id,
+                "title": address.title,
+                "receiver": address.receiver,
+                "province": address.province.name,
+                "city": address.city.name,
+                "district": address.district.name,
+                "province_id": address.province.id,
+                "city_id": address.city.id,
+                "district_id": address.district.id,
+                "place": address.place,
+                "mobile": address.mobile,
+                "tel": address.tel,
+                "email": address.email
+            }
+            address_dict_list.append(address_dict)
+        context = {
+            'addresses': address_dict_list,
+            'default_address_id':curr_user_obj.default_address_id or '0'
+        }
+        return render(request,'user_address.html',context)
+
+#新增收获地址
+class NewAddAddressView(View):
+    def post(self,request):
+        '''
+        新增地址
+        :param request: 获取前端参数
+        :return: 响应json数据
+        '''
+        #获取参数
+        count = Address.objects.filter(user=request.user,is_deleted=False).count()
+        if count >=5:
+            return http.JsonResponse({'code':response_code.RETCODE.THROTTLINGERR,'errmsg':'地址添加过多'})
+        data_json = json.loads(request.body.decode())
+        receiver = data_json.get('receiver')
+        place = data_json.get('place')
+        mobile = data_json.get('mobile')
+        tel = data_json.get('tel')
+        email = data_json.get('email')
+        province_id = data_json.get('province_id')
+        city_id = data_json.get('city_id')
+        district_id = data_json.get('district_id')
+        #校验参数
+        if not all([receiver,place,mobile]):
+            return http.HttpResponseForbidden("缺少必要参数")
+        #校验手机格式
+        if not re.match('^1[3-9]\d{9}$',mobile):
+            return http.HttpResponseForbidden("手机号格式有误")
+
+        #校验固定电话
+        if tel:
+            if not re.match('^\d{7}$',tel):
+                return http.HttpResponseForbidden("固定电话格式有误")
+
+        #校验邮箱
+        if email:
+            if not re.match('^[0-9a-zA-Z]{1,16}@(qq||yeah||126||163)\.(net||cn||com)$',email):
+                return http.HttpResponseForbidden("邮箱格式有误")
+        #保存数据库
+        try:
+            address_obj = Address.objects.create(
+                user=request.user,#当前用户
+                title=receiver,
+                receiver=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                district_id=district_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email
+            )
+            if not request.user.default_address:
+                request.user.default_address = address_obj
+                request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code':response_code.RETCODE.DBERR,'errmsg':'新增错误'})
+
+        #地址详细信息
+        address = {
+            'receiver': receiver,
+            'title':address_obj.title,
+            'province': address_obj.province.name,
+            'city': address_obj.city.name,
+            'district': address_obj.district.name,
+            'place': place,
+            'mobile': mobile,
+            'tel': tel,
+            'email': email,
+        }
+        #响应数据
+        return http.JsonResponse({'code':response_code.RETCODE.OK,'errmsg':'添加成功','address_dict':address})
+
+class UpdateAddressView(View):
+    def put(self,request,iid):
+        '''
+        修改地址
+        :param request: 获取前端参数
+        :return: 响应json数据
+        '''
+        # 获取参数
+        data_json = json.loads(request.body.decode())
+        receiver = data_json.get('receiver')
+        place = data_json.get('place')
+        mobile = data_json.get('mobile')
+        tel = data_json.get('tel')
+        email = data_json.get('email')
+        province_id = data_json.get('province_id')
+        city_id = data_json.get('city_id')
+        district_id = data_json.get('district_id')
+        # 校验参数
+        if not all([receiver, place, mobile]):
+            return http.HttpResponseForbidden("缺少必要参数")
+        # 校验手机格式
+        if not re.match('^1[3-9]\d{9}$', mobile):
+            return http.HttpResponseForbidden("手机号格式有误")
+
+        # 校验固定电话
+        if tel:
+            if not re.match('^\d{7}$', tel):
+                return http.HttpResponseForbidden("固定电话格式有误")
+
+        # 校验邮箱
+        if email:
+            if not re.match('^[0-9a-zA-Z]{1,16}@(qq||yeah||126||163)\.(net||cn||com)$', email):
+                return http.HttpResponseForbidden("邮箱格式有误")
+        # 保存数据库
+        try:
+            Address.objects.filter(id=iid).update(
+                user=request.user,  # 当前用户
+                receiver=receiver,
+                # title=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                district_id=district_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email
+            )
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '修改错误'})
+
+        # 地址详细信息
+        address_obj = Address.objects.get(id=iid)
+        address = {
+            'receiver': receiver,
+            'title': address_obj.title,
+            'province': address_obj.province.name,
+            'city': address_obj.city.name,
+            'district': address_obj.district.name,
+            'place': place,
+            'mobile': mobile,
+            'tel': tel,
+            'email': email,
+        }
+        # 响应数据
+        return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': '添加成功', 'address_dict': address})
+
+class UpdateTitleView(View):
+    def put(self,request,iid):
+        '''
+        修改地址标题
+        :param request: 接受新标题
+        :return:
+        '''
+        #接受参数
+        new_title_dict = json.loads(request.body.decode())
+        new_title = new_title_dict.get('new_title')
+        #校验参数
+        if not new_title:
+            return http.HttpResponseForbidden("标题不为空")
+        #保存数据库
+        try:
+            Address.objects.filter(id=iid).update(title=new_title)
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code':response_code.RETCODE.DBERR,'errmsg':'保存失败'})
+        #响应数据
+        return http.JsonResponse({'code':response_code.RETCODE.OK,'errmsg':'ok'})
+
+class DelAddressView(View):
+    def delete(self,request,iid):
+        '''
+        删除地址
+        :param request:
+        :param iid: 地址id
+        :return: 响应状态
+        '''
+        try:#id存在则将is_deleted修改为True
+            Address.objects.filter(id=iid).update(is_deleted=True)
+            #当前用户有没有设置默认地址，并且是否存在
+            obj = Address.objects.filter(id=request.user.default_address_id,is_deleted=False)
+            if not obj:
+                request.user.default_address_id = ''
+                request.user.save()
+        except Exception as e:#不存在返回错误状态码
+            logger.error(e)
+            return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '删除失败'})
+        #响应正确状态码
+        return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': 'ok'})
+
+#设置默认地址
+class SetDefaultAddressView(View):
+    def put(self,request,iid):
+        '''
+        #设置默认地址
+        :param request:
+        :param iid:地址id
+        :return:
+        '''
+        try:#修改默认地址id
+            request.user.default_address_id = iid
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '更改失败'})
+        # 响应正确状态码
+        return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': 'ok'})
