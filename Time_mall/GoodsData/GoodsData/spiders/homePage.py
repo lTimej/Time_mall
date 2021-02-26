@@ -6,6 +6,9 @@ from GoodsData.pipelines import ProductId,GoodsCategory,GoodsList,Spu,SpuSpecs,S
 from GoodsData.utils import getGoodsDetailInfo
 
 class HomepageSpider(scrapy.Spider):
+    '''
+    抓取商品数据
+    '''
     name = 'homePage'
     start_urls = [
         'https://mce.mogucdn.com/jsonp/multiget/3?pids=109499%2C109520%2C109731%2C109753%2C110549%2C109779%2C110547%2C109757%2C109793%2C109795%2C110563%2C110546%2C110544']
@@ -110,15 +113,18 @@ class HomepageSpider(scrapy.Spider):
             for prop in skuInfo.get('props'):
                 spu_spec_name = prop.get('label')
                 spu_specs_list.append(spu_spec_name)
-                msg = Spu().select(spu_name)  # -------------------------------spu查询
+                # -------------------------------spu查询
+                msg = Spu().select(spu_name)
                 if msg:
                     if msg[0]:
                         spu_id = msg[0]
                         category2_id = msg[1]
-                        SpuSpecs().insert(spu_spec_name, spu_id)  # -------------------------------spuspecification表
+                        # -------------------------------spuspecification表
+                        SpuSpecs().insert(spu_spec_name, spu_id)
         for i in detailImage:
             desc_image = FastFdfs().upload(i)
-            DetailImag().insert(desc, desc_image, spu_id)  # ---------------------------------DetailImag表
+            # ---------------------------------DetailImag表
+            DetailImag().insert(desc, desc_image, spu_id)
         for sku in skuInfo.get('skus'):
             price = float(sku.get('price') / 100)
             nowprice = float(sku.get('nowprice') / 100)
@@ -132,45 +138,57 @@ class HomepageSpider(scrapy.Spider):
                         spu_specs[spu_specs_list[0]] = style
                     if size:
                         spu_specs[spu_specs_list[0]] = size
-                    msg = SpuSpecs().select(spu_specs_list[0], spu_id)  # ----------------spuspecs查询
+                        # ----------------spuspecs查询
+                    msg = SpuSpecs().select(spu_specs_list[0], spu_id)
                     if msg:
                         if msg[0]:
                             spec_id = msg[0]
+                            # --------------SpecsOption表
                             SpecsOption().insert(spu_specs[spu_specs_list[0]],
-                                                 spec_id)  # --------------SpecsOption表
+                                                 spec_id)
+                            # ---------------------------------SpecsOption查询
                             m = SpecsOption().select(spu_specs[spu_specs_list[0]],
-                                                     spec_id)  # ---------------------------------SpecsOption查询
+                                                     spec_id)
                             if m:
                                 if m[0]:
                                     option_id = m[0]
                 else:
                     if style:
                         spu_specs[spu_specs_list[0]] = style
-                        msg = SpuSpecs().select(spu_specs_list[0], spu_id)  # ----------------spuspecs查询
+                        # ----------------spuspecs查询
+                        msg = SpuSpecs().select(spu_specs_list[0], spu_id)
                         if msg:
                             if msg[0]:
                                 spec_id = msg[0]
-                                SpecsOption().insert(spu_specs[spu_specs_list[0]], spec_id)  # ---------SpecsOption表
+                                # ---------SpecsOption表
+                                SpecsOption().insert(spu_specs[spu_specs_list[0]], spec_id)
+                                # ---------------------------------SpecsOption查询
                                 m = SpecsOption().select(spu_specs[spu_specs_list[0]],
-                                                         spec_id)  # ---------------------------------SpecsOption查询
+                                                         spec_id)
                                 if m:
                                     if m[0]:
                                         option_id = m[0]
                     if size:
                         spu_specs[spu_specs_list[1]] = size
-                        msg = SpuSpecs().select(spu_specs_list[1], spu_id)  # ----------------spuspecs查询
+                        # ----------------spuspecs查询
+                        msg = SpuSpecs().select(spu_specs_list[1], spu_id)
                         if msg:
                             if msg[0]:
                                 spec_id = msg[0]
-                                SpecsOption().insert(spu_specs[spu_specs_list[1]], spec_id)  # ---------SpecsOption表
+                                # ---------SpecsOption表
+                                SpecsOption().insert(spu_specs[spu_specs_list[1]], spec_id)
+                                # ---------------------------------SpecsOption查询
                                 m = SpecsOption().select(spu_specs[spu_specs_list[1]],
-                                                         spec_id)  # ---------------------------------SpecsOption查询
+                                                         spec_id)
                                 if m:
                                     if m[0]:
                                         option_id = m[0]
             default_image_url = FastFdfs().upload(default_image)
+            # -------------------sku表
             sku_id = Sku().insert(sku_title, price, nowprice, stock, default_image_url, category2_id,
-                                  spu_id)  # -------------------sku表
-            SkuSpecification().insert(option_id, sku_id, spec_id)  # ---------------------------------SkuSpecification表
+                                  spu_id)
+            # ---------------------------------SkuSpecification表
+            SkuSpecification().insert(option_id, sku_id, spec_id)
             img_url = FastFdfs().upload(img)
-            SkuImag().insert(img_url, sku_id)  # ---------------------------------SkuImag表
+            # ---------------------------------SkuImag表
+            SkuImag().insert(img_url, sku_id)

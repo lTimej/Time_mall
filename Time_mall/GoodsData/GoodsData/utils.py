@@ -1,11 +1,11 @@
-import json
-import time
+import json,time,execjs
+
 from collections import OrderedDict
 
-import execjs
-
+from .pipelines import AdCategory, ContentCategory, Content, FastFdfs
 
 def getGoodsDetailInfo(iid,cookies_dict):
+    #蘑菇街数据js解析代码
     js = execjs.compile('''
                             function V(t, e) {
                                     return t(e = {exports: {}}, e.exports),
@@ -155,12 +155,14 @@ def getGoodsDetailInfo(iid,cookies_dict):
                                     }
                                 })
                         ''')
+    #保证json反序列化后字典键值顺序不发生改变
     content = OrderedDict()
     content['iid'] = iid
     content['activityId'] = ''
     content['fastbuyId'] = ''
     content['template'] = '1-1-detail_normal-1.0.0'
     data_json = json.dumps(content)
+    #取出空格----必须去除，我在这里可弄了半天
     data = data_json.replace(' ', '')
     res = js.call('z', data)
     appkey = '100028'
@@ -184,3 +186,88 @@ def getGoodsDetailInfo(iid,cookies_dict):
     mw_sign = js.call('z', sign)
     url = 'https://api.mogu.com/h5/http.detail.api/1/?data=%7B%22iid%22%3A%22' + iid + '%22%2C%22activityId%22%3A%22%22%2C%22fastbuyId%22%3A%22%22%2C%22template%22%3A%221-1-detail_normal-1.0.0%22%7D&mw-appkey=100028&mw-ttid=NMMain%40mgj_pc_1.0&mw-t=' + mw_t + '&mw-uuid=' + uuid + '&mw-h5-os=unknown&mw-sign=' + mw_sign + '&callback=mwpCb2/'
     return url
+
+def writeDataBase(name,title,pid,link,image,index,price,discountprice=None,category_title=None):
+    name1 = name
+    name = name[0:name.find(' ')+1]
+    #将目录标题统一（男装   男装 推荐  ===>男装）
+    if not name:
+        name = name1
+    # --------------------AdCategory查
+    msg = AdCategory().select(name)
+    #数据库存在就不插入
+    if not msg:
+        # --------------------AdCategory表
+        AdCategory().insert(name)
+        # --------------------AdCategory查
+        msg = AdCategory().select(name)
+    if msg:#不存在插入
+        if msg[0]:
+            adCategory_id = msg[0]
+            # --------------------ContentCategory查
+            msg = ContentCategory().select(pid)
+            if not msg:
+                if category_title:
+                    # --------------ContentCategory表
+                    ContentCategory().insert(category_title, pid,
+                                             adCategory_id)
+                    # --------------------ContentCategory查
+                    msg = ContentCategory().select(pid)
+                else:
+                    # --------------ContentCategory表
+                    ContentCategory().insert(name1, pid,
+                                     adCategory_id)
+                    # --------------------ContentCategory查
+                    msg = ContentCategory().select(pid)
+            if msg:
+                if msg[0]:
+                    category_id = msg[0]
+                    # ----------------------Content表
+                    Content().insert(title, link, image, index, 1, category_id,
+                                 price,discountprice)
+
+def verdict(goods,title,link,pid,image,index,price):
+    try:
+        link = 'https:' + link
+    except:
+        link = None
+    if pid == '138852':
+        # print('母装&儿童', pid, goods.get('title'))
+        if link:
+            category_title = '热门品牌'
+            link = goods.get('link')
+            writeDataBase('目录', title, pid, link, image, index - 1, price, category_title=category_title)
+    elif pid == '138851':
+        if link:
+            category_title = '流行话题'
+            link = goods.get('link')
+            writeDataBase('目录', title, pid, link, image, index - 1, price, category_title=category_title)
+    elif pid == '132244':
+        if link:
+            category_title = '主题市场'
+            link = goods.get('link')
+            writeDataBase('目录', title, pid, link, image, index - 1, price, category_title=category_title)
+    elif pid == '110542':
+        writeDataBase('母装&儿童', title, pid, link, image, index, price)
+    elif pid == '110847':
+        writeDataBase('母装&儿童 推荐', title, pid, link, image, index, price)
+    elif pid == '110845':
+        writeDataBase('家纺&家饰', title, pid, link, image, index, price)
+    elif pid == '110538':
+        writeDataBase('家纺&家饰 推荐', title, pid, link, image, index, price)
+    elif pid == '110759':
+        writeDataBase('男装&男鞋', title, pid, link, image, index, price)
+    elif pid == '110528':
+        writeDataBase('男装&男鞋 推荐', title, pid, link, image, index, price)
+    elif pid == '110843':
+        writeDataBase('内衣', title, pid, link, image, index, price)
+    elif pid == '110535':
+        writeDataBase('内衣 推荐', title, pid, link, image, index, price)
+    elif pid == '110892':
+        writeDataBase('女鞋&包包 推荐', title, pid, link, image, index, price)
+    elif pid == '110523' or pid == '110521':
+        writeDataBase('女鞋&包包', title, '110523', link, image, index, price)
+    elif pid == '110564':
+        writeDataBase('女装', title, pid, link, image, index, price)
+    elif pid == '110468':
+        writeDataBase('限时抢购', title, pid, link, image, index, price)
