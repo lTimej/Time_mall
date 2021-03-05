@@ -3,7 +3,6 @@ import re,requests,pymysql
 
 from fdfs_client.client import Fdfs_client
 
-
 client = Fdfs_client('/home/time/malls/Time_mall/Time_mall/GoodsData/fastfdfs/client.conf')
 class FastFdfs:
     '''
@@ -17,7 +16,7 @@ class FastFdfs:
         res = client.upload_by_buffer(img_byte, file_ext_name='png')
         if res.get('Status') == 'Upload successed.':
             img = res.get('Remote file_id')
-            img = 'http://192.168.2.33:8888/' + img.replace('\\', '/')
+            img = img.replace('\\', '/')
             return img
         return None
     def download(self):#下载
@@ -35,6 +34,7 @@ class ProductId:
         :param pid:
         :return:
         '''
+        print('tb_product_id',pid)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         msg = self.select(pid)
@@ -72,6 +72,7 @@ class GoodsCategory:
         self.conn = pymysql.connect(host='127.0.0.1',port=3306, user='Time',password='liujun',db='Time_mall',charset='utf8')
         self.cur = self.conn.cursor()
     def insert(self,title,parent_id=None):
+        print('tb_goods_category',title,parent_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         if parent_id:
@@ -104,6 +105,7 @@ class GoodsList:
         self.conn = pymysql.connect(host='127.0.0.1',port=3306, user='Time',password='liujun',db='Time_mall',charset='utf8')
         self.cur = self.conn.cursor()
     def insert(self,url,sequeue,category_id,pid_id):
+        print('tb_goods_list',url,sequeue,category_id,pid_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_goods_list(url,sequeue,category_id,pid_id,create_time,update_time) values('{}','{}','{}','{}','{}','{}');".format(url,sequeue,category_id,pid_id,create_time,update_time)
@@ -130,6 +132,7 @@ class Spu:
         self.conn = pymysql.connect(host='127.0.0.1',port=3306, user='Time',password='liujun',db='Time_mall',charset='utf8')
         self.cur = self.conn.cursor()
     def insert(self,name,category1_id,category2_id):
+        print('tb_spu',name,category1_id,category2_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_spu(name,category1_id,category2_id,sales,cfavs,create_time,update_time) values('{}','{}','{}','{}','{}','{}','{}');".format(name,category1_id,category2_id,0,0,create_time,update_time)
@@ -154,6 +157,7 @@ class SpuSpecs:
         self.cur = self.conn.cursor()
 
     def insert(self, name, spu_id):
+        print('tb_spu_specs',name,spu_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_spu_specification(name,spu_id,create_time,update_time) values('{}','{}','{}','{}');".format(name,spu_id,create_time,update_time)
@@ -183,6 +187,7 @@ class SpecsOption:
         self.cur = self.conn.cursor()
 
     def insert(self, name, spec_id):
+        print('tb_spec_option',name,spec_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_specification_option(value,spec_id,create_time,update_time) values('{}','{}','{}','{}');".format(name,spec_id,create_time,update_time)
@@ -210,6 +215,7 @@ class Sku:
         self.cur = self.conn.cursor()
 
     def insert(self, name, price,now_price,stock,default_image,category_id,spu_id):
+        print('tb_sku',name,price,now_price,default_image,category_id,spu_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         global count
@@ -240,6 +246,7 @@ class SkuImag:
         self.conn = pymysql.connect(host='127.0.0.1', port=3306, user='Time', password='liujun', db='Time_mall',charset='utf8')
         self.cur = self.conn.cursor()
     def insert(self, image,sku_id):
+        print('tb_sku_image',image,sku_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_sku_image(image,sku_id,create_time,update_time) values('{}','{}','{}','{}');".format(image,sku_id,create_time,update_time)
@@ -263,6 +270,7 @@ class DetailImag:
         self.conn = pymysql.connect(host='127.0.0.1',port=3306, user='Time',password='liujun',db='Time_mall',charset='utf8')
         self.cur = self.conn.cursor()
     def insert(self, desc,desc_image,spu_id):
+        print('tb_detail_image',desc,desc_image,spu_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_spu_desc(detail_info,desc_image,spu_id,create_time,update_time) values('{}','{}','{}','{}','{}');".format(desc,desc_image,spu_id,create_time,update_time)
@@ -287,6 +295,7 @@ class SkuSpecification:
         self.cur = self.conn.cursor()
 
     def insert(self, option_id,sku_id,spec_id):
+        print('tb_sku_spec',option_id,sku_id,spec_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_sku_specification(option_id,sku_id,spec_id,create_time,update_time) values('{}','{}','{}','{}','{}');".format(option_id,sku_id,spec_id,create_time,update_time)
@@ -313,6 +322,7 @@ class AdCategory:
         self.cur = self.conn.cursor()
 
     def insert(self, title):
+        print('tb_adcategory',title)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_ad_category(create_time,update_time,title) values('{}','{}','{}');".format(create_time,update_time,title)
@@ -338,9 +348,11 @@ class ContentCategory:
         self.cur = self.conn.cursor()
 
     def insert(self, title,cid,adCategory_id):
+        print('tb_content_category',title,cid,adCategory_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         sql = "insert into tb_content_category(create_time,update_time,title,cid,adCategory_id) values('{}','{}','{}','{}','{}');".format(create_time,update_time,title,cid,adCategory_id)
+
         try:
             self.cur.execute(sql)
             self.conn.commit()
@@ -363,6 +375,7 @@ class Content:
         self.cur = self.conn.cursor()
 
     def insert(self, title,url,image,sequence,status,category_id,price=None,discountprice=None):
+        print('tb_content',title,url,image,sequence,category_id,price,discountprice)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         if image:
