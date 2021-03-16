@@ -1,8 +1,8 @@
 import logging
 
 from django import http
-from django.shortcuts import render
 from django.views import View
+from django.shortcuts import render
 from django.core.cache import cache
 
 from areas.models import Areas

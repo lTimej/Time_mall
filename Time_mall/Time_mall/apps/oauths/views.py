@@ -18,7 +18,6 @@ class QQLoginView(View):
         oauth = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET,
                         redirect_uri=settings.QQ_REDIRECT_URI, state=next)
         login_url = oauth.get_qq_url()
-        print(login_url)
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'login_url':login_url})
 class QQcallBackView(View):
     def get(self,request):

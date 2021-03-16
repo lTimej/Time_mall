@@ -1,15 +1,15 @@
-import json
-import re,logging
+import json,re,logging
 
-from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth import login,authenticate,logout
+from django import http
+from django.views import View
+from django.urls import reverse
 from django.db import DatabaseError
 from django.shortcuts import render,redirect
-from django.urls import reverse
-from django.views import View
-from django import http
 from django_redis import get_redis_connection
+from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import login,authenticate,logout
+
 
 from users.models import User,Address
 from Time_mall.utils import constants,response_code
@@ -17,8 +17,13 @@ from Time_mall.utils.view import MyLoginRequiredMixin
 from celery_tasks.email.tasks import send_verify_email
 from users.utils import generate_email_token, get_email_info
 
-logger = logging.getLogger('django')
+'''
+                     用户相关操作：logging logout register username_verify mobile_verify email address
+'''
 
+#日志器
+logger = logging.getLogger('django')
+#用户名重复校验
 class UsernameRepetition(View):
     def get(self,request,username):
         '''
@@ -30,7 +35,7 @@ class UsernameRepetition(View):
         #返回用户名个数
         count = User.objects.filter(username=username).count()
         return http.JsonResponse({"count":count})
-
+#手机号重复校验
 class PhoneRepetition(View):
     def get(self,request,phone):
         '''
@@ -43,7 +48,6 @@ class PhoneRepetition(View):
         count = User.objects.filter(phone=phone).count()
         #返回响应
         return http.JsonResponse({"count":count})
-
 class RegisterView(View):
     def get(self,request):
         '''
@@ -118,7 +122,7 @@ class RegisterView(View):
         #4、重定向页面
         return redirect(reverse('contents:index'))#reverse反向解析
         # return http.HttpResponse('注册成功，重定向到首页')
-
+#用户登录
 class LoginView(View):
     def get(self,request):
         '''
@@ -170,10 +174,14 @@ class LoginView(View):
         #将用户名存入cookies中
         response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
         return response
-
 #退出登录
 class LogoutView(View):
     def get(self,request):
+        '''
+        退出登录
+        :param request:
+        :return:
+        '''
         #清理session
         logout(request)
         #重定向至首页
@@ -182,10 +190,14 @@ class LogoutView(View):
         response.delete_cookie("username")
         #返回
         return response
-
 #用户信息
 class UserInfoView(LoginRequiredMixin,View):
     def get(self,request):
+        '''
+        用户信息
+        :param request:
+        :return:
+        '''
         # username = request.COOKIES.get("username")
         #获取前端所需要的参数
         username = request.user.username
@@ -200,7 +212,7 @@ class UserInfoView(LoginRequiredMixin,View):
         }
         #将数据传到前端
         return render(request,'user_info.html',context)
-
+#添加邮箱
 class EmailView(MyLoginRequiredMixin,View):#用户登录才进行添加
     def put(self,request):
         '''
@@ -234,7 +246,7 @@ class EmailView(MyLoginRequiredMixin,View):#用户登录才进行添加
         print(9999999999999)
         #响应状态码
         return http.JsonResponse({"code":response_code.RETCODE.OK,'errmsg':"邮箱发送成功"})
-
+#邮箱验证
 class EmailVerifyView(View):
     def get(self,request):
         '''
@@ -260,13 +272,20 @@ class EmailVerifyView(View):
             return http.HttpResponseServerError("存储失败")
         #重定向userinfo
         return redirect(reverse('users:userinfo'))
-
 #收货地址
 class AddressView(View):
     def get(self,request):
+        '''
+        收货地址
+        :param request:
+        :return: 响应收货地址页面
+        '''
+        #获取当前登录用户
         curr_user_obj = request.user
+        #获取当前用户收货地址
         addresses = Address.objects.filter(user_id=curr_user_obj.id,is_deleted=False)
         address_dict_list = []
+        #重构前端数据
         for address in addresses:
             address_dict = {
                 "id": address.id,
@@ -284,12 +303,13 @@ class AddressView(View):
                 "email": address.email
             }
             address_dict_list.append(address_dict)
+            #上下文
         context = {
             'addresses': address_dict_list,
             'default_address_id':curr_user_obj.default_address_id or '0'
         }
+        #响应页面
         return render(request,'user_address.html',context)
-
 #新增收获地址
 class NewAddAddressView(View):
     def post(self,request):
@@ -300,7 +320,7 @@ class NewAddAddressView(View):
         '''
         #获取参数
         count = Address.objects.filter(user=request.user,is_deleted=False).count()
-        if count >=5:
+        if count >= 5:
             return http.JsonResponse({'code':response_code.RETCODE.THROTTLINGERR,'errmsg':'地址添加过多'})
         data_json = json.loads(request.body.decode())
         receiver = data_json.get('receiver')
@@ -322,7 +342,6 @@ class NewAddAddressView(View):
         if tel:
             if not re.match('^\d{7}$',tel):
                 return http.HttpResponseForbidden("固定电话格式有误")
-
         #校验邮箱
         if email:
             if not re.match('^[0-9a-zA-Z]{1,16}@(qq||yeah||126||163)\.(net||cn||com)$',email):
@@ -347,7 +366,6 @@ class NewAddAddressView(View):
         except Exception as e:
             logger.error(e)
             return http.JsonResponse({'code':response_code.RETCODE.DBERR,'errmsg':'新增错误'})
-
         #地址详细信息
         address = {
             'receiver': receiver,
@@ -362,7 +380,7 @@ class NewAddAddressView(View):
         }
         #响应数据
         return http.JsonResponse({'code':response_code.RETCODE.OK,'errmsg':'添加成功','address_dict':address})
-
+#修改地址
 class UpdateAddressView(View):
     def put(self,request,iid):
         '''
@@ -429,7 +447,7 @@ class UpdateAddressView(View):
         }
         # 响应数据
         return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': '添加成功', 'address_dict': address})
-
+#修改地址标题
 class UpdateTitleView(View):
     def put(self,request,iid):
         '''
@@ -451,7 +469,7 @@ class UpdateTitleView(View):
             return http.JsonResponse({'code':response_code.RETCODE.DBERR,'errmsg':'保存失败'})
         #响应数据
         return http.JsonResponse({'code':response_code.RETCODE.OK,'errmsg':'ok'})
-
+#删除地址
 class DelAddressView(View):
     def delete(self,request,iid):
         '''
@@ -472,7 +490,6 @@ class DelAddressView(View):
             return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '删除失败'})
         #响应正确状态码
         return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': 'ok'})
-
 #设置默认地址
 class SetDefaultAddressView(View):
     def put(self,request,iid):
@@ -490,3 +507,12 @@ class SetDefaultAddressView(View):
             return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '更改失败'})
         # 响应正确状态码
         return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': 'ok'})
+#修改密码
+class UpdatePasswordView(View):
+    def get(self,request):
+        '''
+        修改密码
+        :param request:
+        :return:
+        '''
+        return render(request,'update_password.html')
