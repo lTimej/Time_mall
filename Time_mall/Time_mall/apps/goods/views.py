@@ -10,11 +10,14 @@ from goods.utils import get_spu, get_goods_category, get_pagination_data, get_sk
 
 from contents.utils import get_category
 
+from goods import constants
+
 # Create your views here.
 #商品列表
 class GoodsListView(View):
     def get(self,request,category_id):
         page = request.GET.get('page')
+        per_page_num = constants.GOODS_LIST_LIMIT
         if not page:
             page = 1
         sort = request.GET.get('sort', 'default')
@@ -24,7 +27,7 @@ class GoodsListView(View):
         #面包屑
         breadcrums= get_goods_category(category_id)
         #分类器
-        sku_dict,total_page = get_pagination_data(skus_list,page)
+        sku_dict,total_page = get_pagination_data(skus_list,page,per_page_num)
         content = {
             'spus_dict':sku_dict,
             'goods':get_category(),
@@ -53,7 +56,6 @@ class SkuView(View):
         spec_id = request.GET.get("spec_id")
         spec_label = request.GET.get("label")
         flag = int(request.GET.get("flag"))
-        print(spec_label,spec_title)
         context = get_img(spec_title,spec_id,spec_label,flag)
         return http.JsonResponse(context)
 

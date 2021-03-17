@@ -58,11 +58,12 @@ def get_spu(sort=None,p_r=None):
         return http.HttpResponseNotFound('GoodsCategory does not exist')
     return skus_list
 #分页
-def get_pagination_data(skus_dict,page):
+def get_pagination_data(skus_dict,page,per_page_num):
     sku_dict = {}
     #分页器对象
     # Paginator(object_list, per_page_data)
-    paginator = Paginator(skus_dict, constants.GOODS_LIST_LIMIT)
+    print(len(skus_dict))
+    paginator = Paginator(skus_dict, per_page_num)
     # 获取列表页总页数
     total_page = paginator.num_pages
     try:
@@ -118,7 +119,6 @@ def get_sku(spu_id,detail_image,desc_dict):
                 spec_dict[name] = spec_id
         goods_specs[name] = specs_option_list
         d[specs_list[index]] = goods_specs
-    print(d)
     title = sku_obj.title
     price = sku_obj.price
     now_price = sku_obj.now_price
