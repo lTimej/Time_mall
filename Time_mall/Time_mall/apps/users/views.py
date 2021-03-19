@@ -10,7 +10,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import login,authenticate,logout
 
-
+from cart.utils import combine_carts
 from users.models import User,Address
 from Time_mall.utils import constants,response_code
 from Time_mall.utils.view import MyLoginRequiredMixin
@@ -162,7 +162,6 @@ class LoginView(View):
             request.session.set_expiry(0)
         else:#默认周期为14天
             request.session.set_expiry(None)
-        print(user)
         #重定向首页
         next = request.GET.get("next")
         # 指定未登录用户重定向的地址
@@ -171,11 +170,13 @@ class LoginView(View):
             response = redirect(next)
         else:#重定向到首页
             response = redirect(reverse("contents:index"))
+        #购物车整合
+        response = combine_carts(request,user,response)
         #将用户名存入cookies中
         response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
         return response
 #退出登录
-class LogoutView(View):
+class LogoutView(LoginRequiredMixin,View):
     def get(self,request):
         '''
         退出登录
@@ -185,7 +186,13 @@ class LogoutView(View):
         #清理session
         logout(request)
         #重定向至首页
-        response = redirect(reverse("contents:index"))
+
+        next = request.GET.get("next")
+        #next存在重定向到指定页面
+        if next:
+            response = redirect(next)
+        else:
+            response = redirect(reverse("contents:index"))
         #删除cookie
         response.delete_cookie("username")
         #返回
