@@ -170,10 +170,11 @@ class LoginView(View):
             response = redirect(next)
         else:#重定向到首页
             response = redirect(reverse("contents:index"))
+        # 将用户名存入cookies中
+        response.set_cookie("username", user.username, max_age=constants.COOKIE_VALUE_EXPIERS)
         #购物车整合
         response = combine_carts(request,user,response)
-        #将用户名存入cookies中
-        response.set_cookie("username",user.username,max_age=constants.COOKIE_VALUE_EXPIERS)
+
         return response
 #退出登录
 class LogoutView(LoginRequiredMixin,View):
@@ -306,8 +307,8 @@ class AddressView(View):
                 "district_id": address.district.id,
                 "place": address.place,
                 "mobile": address.mobile,
-                "tel": address.tel,
-                "email": address.email
+                "tel": address.tel or '',
+                "email": address.email or ''
             }
             address_dict_list.append(address_dict)
             #上下文
@@ -382,8 +383,8 @@ class NewAddAddressView(View):
             'district': address_obj.district.name,
             'place': place,
             'mobile': mobile,
-            'tel': tel,
-            'email': email,
+            'tel': tel or '',
+            'email': email or '',
         }
         #响应数据
         return http.JsonResponse({'code':response_code.RETCODE.OK,'errmsg':'添加成功','address_dict':address})
