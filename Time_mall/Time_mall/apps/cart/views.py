@@ -81,6 +81,7 @@ class CartListView(View):
             'carts':cart_list,
             "cartLen":cartLen,
         }
+        print(66666666666,cart_list)
         return render(request,'cart.html',context)
     def post(self,request):
         #获取参数
@@ -319,7 +320,6 @@ class CartSelectedView(View):
             response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车成功', 'cart_sku': cart_sku})
             response.set_cookie('carts', carts, max_age=constants.CARTS_COOKIE_EXPIRES)
             return response
-
 class ShortCutCartView(View):
     def get(self,request):
         #获取用户
