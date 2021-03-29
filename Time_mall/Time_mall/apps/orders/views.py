@@ -1,16 +1,23 @@
 import json,logging
 from decimal import Decimal
+
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from django.db import transaction
 
+
 from django import http
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View
 from django_redis import get_redis_connection
 # Create your views here.
 from Time_mall.utils.response_code import RETCODE
+
+from goods import constants
 from goods.models import Sku
+from goods.utils import get_pagination_data
+from orders.utils import get_carts, get_addr
 from users.models import Address
 from orders.models import OrderInfo,OrderGoods
 
@@ -21,100 +28,9 @@ class OrderListView(View):
         user = request.user
         if not user.is_authenticated:
             return http.HttpResponseForbidden("未登录")
-        #获取购物车信息
-        # 链接resdis数据库
-        redis_conn = get_redis_connection("carts")
-        skus = redis_conn.hgetall('cart_user_%s' % user.id)
-        selected = redis_conn.smembers("cart_selected_%s" % user.id)
-        # 构建购物车数据结构
-        carts = {}
-        for sku_id, count in skus.items():
-            # 商品属性
-            spec = redis_conn.hget("spec_user_%s" % user.id, int(sku_id))
-            spec = eval(spec.decode())
-            carts[int(sku_id)] = {
-                "count": int(count),
-                "selected": sku_id in selected,
-                "spec": spec
-            }
-        cart_list = list()
-        for sku_id in carts.keys():
-            selected = carts[sku_id].get("selected")
-            if not selected:#选择勾选的商品
-                continue
-            sku_obj = Sku.objects.get(id=sku_id)
-            sku_id = sku_obj.id
-            spu_id = sku_obj.spu_id
-            title = sku_obj.title
-            price = str(sku_obj.price)
-            now_price = str(sku_obj.now_price)
-            img = settings.HTT + str(sku_obj.skuimage_set.first().image)
-            count = carts[sku_id].get("count")
-            sku_specs = carts[sku_id].get("spec")
-            # 保留两位小数
-            sku_amount_price = str(eval(now_price) * int(count))
-            sku_amount_price = str(Decimal(sku_amount_price).quantize(Decimal("0.00")))
-            youhui = str((eval(price) - eval(now_price))*count)
-            youhui = str(Decimal(youhui).quantize(Decimal("0.00")))
-            sku_dict = {
-                'sku_id': sku_id,
-                'title': title,
-                'price': price,
-                'img': img,
-                'count': count,
-                'selected': str(selected),
-                'sku_specs': sku_specs,
-                "spu_id": spu_id,
-                "sku_amount_price": sku_amount_price,
-                'youhui':youhui
-            }
-            cart_list.append(sku_dict)
-        cartLen = len(cart_list)
 
-        #
-        try:
-            addresses = Address.objects.filter(user_id=user.id,is_deleted=False)
-        except :
-            addresses = None
-        try:
-            default_address_id = user.default_address_id
-        except:
-            default_address_id = None
-        address_dict_list = []
-        # 重构前端数据
-        default_addr = {}
-        for address in addresses:
-            if address.id == default_address_id:
-                default_addr = {
-                    "id": address.id,
-                    "receiver": address.receiver,
-                    "province": address.province.name,
-                    "city": address.city.name,
-                    "district": address.district.name,
-                    "province_id": address.province.id,
-                    "city_id": address.city.id,
-                    "district_id": address.district.id,
-                    "place": address.place,
-                    "mobile": address.mobile,
-                }
-                continue
-            address_dict = {
-                "id": address.id,
-                "receiver": address.receiver,
-                "province": address.province.name,
-                "city": address.city.name,
-                "district": address.district.name,
-                "province_id": address.province.id,
-                "city_id": address.city.id,
-                "district_id": address.district.id,
-                "place": address.place,
-                "mobile": address.mobile,
-                "email":address.email or ''
-            }
-            address_dict_list.append(address_dict)
-        #将默认地址放在最前面
-        if default_address_id:
-            address_dict_list.insert(0,default_addr)
+        cart_list,cartLen = get_carts(user)
+        address_dict_list,default_address_id = get_addr(user)
         if not cart_list:
             context = {
                 "code":0,
@@ -131,6 +47,7 @@ class OrderListView(View):
                 "addresses": address_dict_list,
                 "default_address": default_address_id,
             }
+
         return render(request,'order.html',context)
 class OrderView(View):
     def post(self,request):
@@ -139,6 +56,11 @@ class OrderView(View):
         data_dict = json.loads(data_str)
         address_id = data_dict.get('address_id')
         pay_method = data_dict.get("pay_method")
+        #立即购买是商品信息
+        sku_id = int(data_dict.get("sku_id"))
+        count = int(data_dict.get("count"))
+        specs = data_dict.get("specs")
+        buy_id = data_dict.get('id')
         #校验参数
         if not all([address_id,pay_method]):
             return http.HttpResponseForbidden("缺少必传参数")
@@ -161,13 +83,17 @@ class OrderView(View):
                 redis_conn = get_redis_connection("carts")
                 skus = redis_conn.hgetall("cart_user_%s"%user.id)
                 selected = redis_conn.smembers("cart_selected_%s"%user.id)
-                skus_id = [sku_id for sku_id in selected if sku_id in skus]
+                skus_id = [int(sku_id) for sku_id in selected if sku_id in skus]
+
+                if buy_id:
+                    skus_id = list()
+                    skus_id.append(sku_id)
                 #初始化商品总数和商品总价格
                 total_num = 0
                 total_price = 0
                 freight = Decimal('0.00')
                 order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
-                order = OrderInfo.objects.create(
+                order = OrderInfo.objects.create(#新增订单信息
                     order_id=order_id,
                     user=user,
                     address=address,
@@ -182,9 +108,17 @@ class OrderView(View):
                 for sku_id in skus_id:#查询被勾选的商品
                     while True:
                         # 获取商品属性
-                        spec = redis_conn.hget("spec_user_%s" % user.id, int(sku_id)).decode()
+                        try:
+                            if not buy_id:
+                                spec = redis_conn.hget("spec_user_%s" % user.id, sku_id).decode()
+                                count = int(skus.get(str(sku_id).encode()))
+                            else:
+                                spec = specs
+                                count = int(count)
+                        except:
+                            spec = specs
+                            count = int(count)
                         # 获取商品数量
-                        count = int(skus.get(sku_id))
                         sku_obj = Sku.objects.get(id=int(sku_id))
                         price = Decimal(sku_obj.now_price).quantize(Decimal("0.00"))
                         total_num += count
@@ -223,25 +157,26 @@ class OrderView(View):
                 order.total_count = total_num
                 order.total_amount = total_price + freight
                 order.save()
-                sku_id = skus_id[0]
-                sku_count = int(skus.get(sku_id))
+                #订单成功提交显示sku标题和数量
+                sku_id = sku_id
+                sku_count = int(count)
             except Exception as e:
                 logger.error(e)
                 transaction.savepoint_rollback(save_id)
                 return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '下单失败'})
             #订单提交成功，提交一次事务
             transaction.savepoint_commit(save_id)
-        #订单提交清空购物车商品
-        pipeline = redis_conn.pipeline()
-        pipeline.hdel("cart_user_%s"%user.id,*selected)
-        pipeline.srem("cart_selected_%s"%user.id,*selected)
-        pipeline.hdel("spec_user_%s"%user.id,*selected)
         #执行
-        try:
-            pipeline.execute()
-        except Exception:
-            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '数据错误'})
-        print(address_id,pay_method,type(address_id),type(pay_method))
+        if not buy_id:
+            try:
+                # 订单提交清空购物车商品
+                pipeline = redis_conn.pipeline()
+                pipeline.hdel("cart_user_%s" % user.id, *selected)
+                pipeline.srem("cart_selected_%s" % user.id, *selected)
+                pipeline.hdel("spec_user_%s" % user.id, *selected)
+                pipeline.execute()
+            except Exception:
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '数据错误'})
         return http.JsonResponse({"code":RETCODE.OK,'errmsg':"提交成功","order_id":order.order_id,"sku_id":int(sku_id),"sku_count":int(sku_count)})
 class CommitOrderView(View):
     def get(self,request):
@@ -251,7 +186,6 @@ class CommitOrderView(View):
         total_price = request.GET.get("payment_amount")
         mv = request.GET.get("mv")
         mv = mv.split('_')
-        print(mv)
         sku_id = int(mv[0])
         sku_count = int(mv[1])
         try:
@@ -276,25 +210,125 @@ class CommitOrderView(View):
         context = {
             "orders":orders
         }
-        print(context)
         return render(request,'summit_order.html',context)
-class UserOrderView(View):
+#用户订单列表
+class UserOrderView(LoginRequiredMixin,View):
     def get(self,request,page):
-        orderInfo_query = OrderInfo.objects.all()
+        orderInfo_query = OrderInfo.objects.filter(is_deleted=False)
+        #构造前端数据/home/time/app_public_key.pem
         orders = list()
         for orderInfo_obj in orderInfo_query:
+            #查找订单信息
             orders_dict = dict()
+            orders_list = list()
             order_id = orderInfo_obj.order_id
+            createTime = str(orderInfo_obj.create_time)[0:str(orderInfo_obj.create_time).find('.')]
+            status = OrderInfo.ORDER_STATUS_CHOICES[orderInfo_obj.status-1][1]
+            freight =str( orderInfo_obj.freight)
+            orders_dict['orderId'] = order_id
+            orders_dict['createTime'] = createTime
+            total_price = 0
             orderGoods_query = orderInfo_obj.skus.all()
+            #查找sku信息
             for orderGoods_obj in orderGoods_query:
+                d = dict()
                 sku_count = orderGoods_obj.count
                 sku_id = orderGoods_obj.sku_id
                 sku_obj = Sku.objects.get(id=sku_id)
+                spu_id = sku_obj.spu_id
                 sku_title = sku_obj.title
                 sku_price = sku_obj.price
                 sku_now_price = sku_obj.now_price
-                sku_img = sku_obj.skuimage_set.first().image
+                total_price += sku_count * sku_now_price
+                sku_img = settings.HTT + str(sku_obj.skuimage_set.first().image)
                 sku_specs = eval(orderGoods_obj.specs)
-                orders_dict['title'] = sku_title
-                print(sku_title,sku_count,sku_price,sku_now_price,sku_specs,sku_img)
-        return render(request,'user_order.html')
+                d['title'] = sku_title
+                d["count"] = sku_count
+                d['price'] = str(sku_price)
+                d['now_price'] = str(sku_now_price)
+                d['image'] = sku_img
+                d["specs"] = sku_specs
+                d["spu_id"] = spu_id
+                orders_list.append(d)
+            orders_list[0]['total_price'] = str(total_price)
+            orders_list[0]['freight'] = str(freight)
+            orders_list[0]['status'] = status
+            orders_dict['orders'] = orders_list
+            orders.append(orders_dict)
+        #每页显示订单数
+        per_page_num = constants.ORDER_LIST_LIMIT
+        #如果用户随意输入的页数不符合，则跳转第一页
+        if len(orders)%2 == 0:
+            total_page = len(orders) // per_page_num
+        else:
+            total_page = len(orders) // per_page_num +1
+        if int(page) > total_page or int(page) <1:
+            page = 1
+        #分页后数据
+        order_dict, total_page = get_pagination_data(orders, page, per_page_num)
+        #上下文
+        context = {
+            "page_num": int(page),
+            "total_page": total_page,
+            "orders":order_dict
+        }
+        #响应
+        return render(request,'user_order.html',context)
+#删除订单
+class DelOrderView(View):
+    def get(self,request,order_id):
+        order_id = order_id[0:-1]
+        page = order_id[-1]
+        try:
+            OrderInfo.objects.filter(order_id=order_id).update(
+                is_deleted=True
+            )
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden("订单不存在")
+        return redirect('/user/order/1/')
+#订单详情
+class OrderDetailView(View):
+    def get(self,request,order_id):
+        # order_id = request.GET.get("orderId")
+        orderInfo_obj = OrderInfo.objects.get(order_id=order_id)
+        order_status = OrderInfo.ORDER_STATUS_CHOICES[orderInfo_obj.status-1][1]
+        order_time = str(orderInfo_obj.create_time)[0:str(orderInfo_obj.create_time).find('.')]
+        order = {
+            "order_id":order_id,
+            "order_status":order_status,
+            "order_time":order_time
+        }
+        address_obj = orderInfo_obj.address
+        receiver = address_obj.receiver
+        addr = address_obj.province.name + address_obj.city.name + address_obj.district.name + address_obj.place
+        email = address_obj.email
+        phone = address_obj.mobile
+        address = {
+            "receiver":receiver,
+            "addr":addr,
+            "enail":email,
+            "phone":phone
+        }
+        ordergoods_query = orderInfo_obj.skus.all()
+        skus = []
+        for og_obj in ordergoods_query:
+            sku_obj = og_obj.sku
+            sku = {
+                'sku_title' : sku_obj.title,
+                'sku_img' : settings.HTT + str(sku_obj.skuimage_set.first().image),
+                'sku_price' :str(sku_obj.price),
+                'sku_now_price' : str(sku_obj.now_price),
+                'sku_spec' : eval(og_obj.specs),
+                'sku_cout' : og_obj.count,
+                'spu_id':str(sku_obj.spu_id)
+            }
+            skus.append(sku)
+        skus[0]['total_price'] = str(orderInfo_obj.total_amount)
+        skus[0]["sku_status"] = OrderInfo.ORDER_STATUS_CHOICES[orderInfo_obj.status-1][1]
+        skus[0]["yh"] = "每满100元减10元：省¥7.47满2件减2元"
+        context = {
+            "order":order,
+            "address":address,
+            "sku":skus,
+        }
+        return render(request,'order_detail.html',context)

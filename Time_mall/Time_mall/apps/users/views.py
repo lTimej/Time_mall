@@ -249,9 +249,7 @@ class EmailView(MyLoginRequiredMixin,View):#用户登录才进行添加
         #获取email验证url
         verify_url = generate_email_token(request.user)
         #异步发送
-        print(verify_url)
         send_verify_email.delay(email,verify_url)
-        print(9999999999999)
         #响应状态码
         return http.JsonResponse({"code":response_code.RETCODE.OK,'errmsg':"邮箱发送成功"})
 #邮箱验证
@@ -281,7 +279,7 @@ class EmailVerifyView(View):
         #重定向userinfo
         return redirect(reverse('users:userinfo'))
 #收货地址
-class AddressView(View):
+class AddressView(LoginRequiredMixin,View):
     def get(self,request):
         '''
         收货地址

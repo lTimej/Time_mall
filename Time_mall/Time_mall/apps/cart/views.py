@@ -81,7 +81,6 @@ class CartListView(View):
             'carts':cart_list,
             "cartLen":cartLen,
         }
-        print(66666666666,cart_list)
         return render(request,'cart.html',context)
     def post(self,request):
         #获取参数
@@ -122,7 +121,6 @@ class CartListView(View):
             redis_conn = get_redis_connection("carts")
             pipeline = redis_conn.pipeline()
             pipeline.hincrby("cart_user_%s"%user.id,sku_id,sku_count)
-            print(spec,type(spec))
             pipeline.hset("spec_user_%s" % user.id, sku_id, str(spec))
             # pipeline.set("cart_spec_%s" % sku_id, str(spec))
             if selected:

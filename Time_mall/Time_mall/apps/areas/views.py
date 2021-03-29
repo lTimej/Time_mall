@@ -36,7 +36,6 @@ class AreasView(View):
                 return http.HttpResponseForbidden("获取省份数据失败")
             # cache.set("province_list", province_list, 10)
                 # 返回前端
-        # print("province_list=",province_list)
         # return http.JsonResponse({"code": "0", "errmsg": "ok", "province_list": province_list})
         else:
             # sub_city_list = cache.get("sub_city_list")
@@ -54,5 +53,4 @@ class AreasView(View):
                 logger.error(e)
                 return http.HttpResponseForbidden("获取省份下级地区数据失败")
             # cache.set("sub_city_list", sub_city_list, 10)
-            # print("sub_city_list=", sub_city_list)
             # return http.JsonResponse({"code": "0", "errmsg": "ok", "sub_city_list": sub_city_list})

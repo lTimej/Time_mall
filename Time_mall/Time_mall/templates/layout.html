@@ -1,0 +1,506 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>Time商城-首页</title>
+    <link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
+    <script type="text/javascript" src="{{ static('js/jquery-1.12.4.min.js') }}"></script>
+	<script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
+</head>
+<body>
+	<div id="app">
+	<div class="header_con" v-cloak>
+		<div class="header">
+			<div class="welcome fl">欢迎来到Time商城!</div>
+			<div class="fr">
+				<div class="login_info fl">
+					欢迎您：<em>Time</em>
+					<a href="javascript:;" class="quit">退出</a>
+				</div>
+				<div class="login_btn fl" v-if="username" >
+                    <a href="javascript:;">[[username]]</a>
+                    <span>|</span>
+					<a href="{{ url('users:logout') }}">退出</a>
+				</div>
+                <div class="login_btn fl" v-else>
+                    <a href="{{ url("users:login") }}">登录</a>
+                    <span>|</span>
+					<a href='{{ url("users:register") }}'>注册</a>
+				</div>
+				<div class="user_link fl">
+					<span>|</span>
+					<a href="{{ url('users:userinfo') }}">用户中心</a>
+					<span>|</span>
+					<a href="{{ url("cart:cartlist") }}">我的购物车</a>
+					<span>|</span>
+					<a href="{{ url("orders:userorder",args=(1,)) }}">我的订单</a>
+				</div>
+			</div>
+		</div>		
+	</div>
+	<div class="search_bar clearfix">
+		<a href="javascript:void(0)" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
+		<div class="search_wrap fl">
+			<form method="get" action="#" class="search_con">
+                <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
+                <input type="submit" class="input_btn fr" name="" value="搜索">
+            </form>
+			<ul class="search_suggest fl">
+				<li><a href="#">索尼微单</a></li>
+				<li><a href="#">优惠15元</a></li>
+				<li><a href="#">美妆个护</a></li>
+				<li><a href="#">买2免1</a></li>
+			</ul>
+		</div>
+		<div class="guest_cart fr">
+			<a href="{{ url("cart:cartlist") }}" class="cart_name fl">我的购物车</a>
+			<div class="goods_count fl" id="show_count">[[cartLen]]</div>
+			<ul class="cart_goods_show">
+				<li v-for="cart in carts">
+					<a :href="'/detail/'+cart.spu_id">
+                        <img :src="cart.img" alt="商品图片">
+                        <h4>[[cart.title]]</h4>
+                        <div>[[cart.count]]</div>
+                    </a>
+				</li>
+			</ul>			
+		</div>
+	</div>
+	<div class="navbar_con">
+		<div class="navbar">
+			<h1 class="fl">主题市场</h1>
+			<ul class="sub_menu" v-cloak>
+				<li v-for="(key,value) in goods">
+					<div class="level1">
+						<a  href="javascript:void(0)">[[ key.name ]]</a>
+                        <a v-for="sub in key.subs" :href="sub.url">[[ sub.name ]]</a>
+					</div>
+				</li>
+			</ul>
+			<ul class="navlist fl">
+				<li>
+                    <a href="javascript:void(0)">限时快抢</a>
+                    <span> | </span>
+                </li>
+			</ul>
+		</div>
+	</div>
+	<div class="pos_center_con clearfix">
+		<ul class="slide">
+			<li><a href="#"><img src="../static/images/slide01.jpg" alt=""></a></li>
+		</ul>
+		<div class="prev"></div>
+		<div class="next"></div>
+		<ul class="points"></ul>
+		<div class="news">
+			<div class="news_title" v-if="username">
+                <a href="#" class="logined"><img src="../static/images/slide01.jpg"></a>
+                <div class="user_icon">
+                    <span class="user_title">上午好！</span>
+                    <span class="username">[[username]]</span>
+                </div>
+                <a class="userInfo" href="#"><span>会员中心</span></a>
+			</div>
+            <div class="news_title" v-else>
+                <a href="#" class="noLogin"><img src="../static/images/blankIcon.png"></a>
+                <div class="user_icon">
+                    <span class="user_title">上午好！</span>
+                    <span class="username">欢迎来到Time购物商城</span>
+                </div>
+                <a class="userInfo" href="#"><span>会员中心</span></a>
+			</div>
+			<div class="news_list">
+                <div class="news_list_title">
+                    <p class="title1">Time购物app</p>
+                    <p class="title2">海量时尚好货</p>
+                </div>
+                <div class="gift">
+                    <img src="../static/images/gift.png">
+                </div>
+			</div>
+		</div>
+	</div>
+{#        商品楼层分类#}
+    <div class="floor_adv" v-cloak>
+{#        今日必抢#}
+        <div class="list_model">
+            <div class="goods_con">
+                <div class="goods_banner fl">
+                    <img src="../static/images/banner01.png">
+                </div>
+                <div class="today goods_list_con pos_center_con" v-for="cts in contents.today_grab">
+                    <div class="goods_list_a" v-for="content in cts">
+                        <a>
+                            <img :src="content.image" alt="幻灯片01">
+                        </a>
+                        <a class="today_grab_title">[[content.title]]</a>
+                        <div class="today_grab_info">
+                        <span class="t1">￥ [[content.price]]</span>
+                        <s class="t2">￥ [[content.discountprice]]</s>
+                    </div>
+                </div>
+            </div>
+                <div class="up up_today"></div>
+                <div class="down down_today"></div>
+                <ul class="point point_today"></ul>
+            </div>
+        </div>
+{#        女装#}
+        <div class="list_model model02">
+            <div class="list_title clearfix">
+                <h3 class="fl" id="model01">
+                    <div></div>女装
+                </h3>
+                <div class="subtitle ">
+                    <a>时尚套装</a>|
+                    <a>长袖衬衫</a>|
+                    <a>牛仔外套</a>|
+                    <a>卫衣</a>|
+                    <a>牛仔裤</a>|
+                    <a>休闲库</a>
+{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
+{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+                </div>
+            </div>
+            <div class="goods_con">
+                <div class="goods_banner2 fl">
+                    <a href="{{ url('contents:expect') }}" ><img src="../static/images/banner02.png"></a>
+                </div>
+                <div class="nvzhuang goods_list_con pos_center_con" v-for="cts in contents.woman_cloth">
+                    <div class="goods_list_a" v-for="content in cts">
+                        <a>
+                            <img :src="content.image" alt="幻灯片01">
+                        </a>
+                        <a class="today_grab_title">[[content.title]]</a>
+                        <div class="today_grab_info">
+                            <span class="t1">￥ [[content.price]]</span>
+    {#                        <s class="t2">￥ [[content.discountprice]]</s>#}
+                        </div>
+                    </div>
+                 </div>
+                <div class="up up_nvzhuang"></div>
+                <div class="down down_nvzhuang"></div>
+                <ul class="point point_nvzhuang"></ul>
+            </div>
+        </div>
+{#        女鞋&包包#}
+        <div class="list_model model03">
+            <div class="list_title clearfix">
+                <h3 class="fl" id="model01">
+                    <div></div>女鞋&包包
+                </h3>
+                <div class="subtitle ">
+                    <a>单鞋</a>|
+                    <a>小白鞋</a>|
+                    <a>运动鞋</a>|
+                    <a>帆布鞋</a>|
+                    <a>斜挎包</a>|
+                    <a>双肩包</a>|
+                    <a>手提包</a>|
+                    <a>拉杆箱</a>
+{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
+{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+                </div>
+            </div>
+            <div class="goods_con clearfix">
+                <div class="goods_banner3 fl">
+                    <img :src="this.myImgFlag == 0 ? myImg1 : myImg2">
+                </div>
+                <div class="nvxie goods_list_con pos_center_con" v-for="cts in contents.woman_shoe">
+                    <div class="goods_list_a" v-for="content in cts">
+                        <a>
+                            <img :src="content.image">
+                        </a>
+                        <a class="today_grab_title">[[content.title]]</a>
+                        <div class="today_grab_info">
+                            <span class="t1">￥ [[content.price]]</span>
+                        </div>
+                    </div>
+                 </div>
+                <ul class="point point_nvxie"></ul>
+                <div class="nvxie_recomment">
+                    <div class="nvxie_recomment_title">
+                        <span class="title">热品商品推销</span>
+                        <span class="change"><img src="../static/images/change.png">换一批</span>
+                    </div>
+                    <div class="nvxie_recomm nvxie_recomment_goods" v-for="cts in contents.woman_shoe_recomm">
+                        <div class="nvxie_recomment_item" v-for="content in cts">
+                            <div class="nvxie_recomment_img">
+                                <a><img :src="content.image"></a>
+                            </div>
+                            <div class="nvxie_recomment_info">
+                                <div class="recomment_title">[[content.title]]</div>
+                                <div class="recomment_price">￥[[content.price]]</div>
+                            </div>
+                        </div  >
+                    </div>
+                </div>
+            </div>
+        </div>
+{#        男装&男鞋#}
+        <div class="list_model model03">
+            <div class="list_title clearfix">
+                <h3 class="fl" id="model01">
+                    <div></div>男装&男鞋
+                </h3>
+                <div class="subtitle ">
+                    <a>当季新品</a>|
+                    <a>潮男T恤</a>|
+                    <a>百搭休闲库</a>|
+                    <a>潮鞋</a>
+{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
+{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+                </div>
+            </div>
+            <div class="goods_con clearfix">
+                <div class="goods_banner3 fl" >
+                    <img  src="../static/images/banner04.png">
+                </div>
+                <div class="nanxie goods_list_con pos_center_con" v-for="cts in contents.man_shoe">
+                    <div class="goods_list_a" v-for="content in cts">
+                        <a>
+                            <img :src="content.image" alt="幻灯片01">
+                        </a>
+                        <a class="today_grab_title">[[content.title]]</a>
+                        <div class="today_grab_info">
+                            <span class="t1">￥ [[content.price]]</span>
+                        </div>
+                    </div>
+                 </div>
+                <ul class="point point_nanxie"></ul>
+                <div class="nvxie_recomment">
+                    <div class="nvxie_recomment_title">
+                        <span class="title">热品商品推销</span>
+                        <span class="nanxie_change"><img src="../static/images/change.png">换一批</span>
+                    </div>
+                    <div class="nanxie_recomm nvxie_recomment_goods" v-for="cts in contents.man_shoe_recomm">
+                        <div class="nvxie_recomment_item" v-for="content in cts">
+                            <div class="nvxie_recomment_img">
+                                <a><img :src="content.image"></a>
+                            </div>
+                            <div class="nvxie_recomment_info">
+                                <div class="recomment_title">[[content.title]]</div>
+                                <div class="recomment_price">￥[[content.price]]</div>
+                            </div>
+                        </div  >
+                    </div>
+                </div>
+            </div>
+        </div>
+{#        内衣#}
+        <div class="list_model model03">
+            <div class="list_title clearfix">
+                <h3 class="fl" id="model01">
+                    <div></div>内衣
+                </h3>
+                <div class="subtitle ">
+                    <a>睡衣</a>|
+                    <a>丝袜打底 </a>|
+                    <a>内衣套装 </a>
+{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
+{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+                </div>
+            </div>
+            <div class="goods_con clearfix">
+                <div class="goods_banner3 fl">
+                    <img :src="this.myImgFlag == 0 ? myImg3 : myImg4">
+                </div>
+                 <div class="neiyi goods_list_con pos_center_con" v-for="cts in contents.underWare">
+                    <div class="goods_list_a" v-for="content in cts">
+                        <a>
+                            <img :src="content.image" alt="幻灯片01">
+                        </a>
+                        <a class="today_grab_title">[[content.title]]</a>
+                        <div class="today_grab_info">
+                            <span class="t1">￥ [[content.price]]</span>
+                        </div>
+                    </div>
+                 </div>
+                <ul class="point point_neiyi"></ul>
+                <div class="nvxie_recomment">
+                    <div class="nvxie_recomment_title">
+                        <span class="title">热品商品推销</span>
+                        <span class="neiyi_change"><img src="../static/images/change.png">换一批</span>
+                    </div>
+                    <div class="neiyi_recomm nvxie_recomment_goods" v-for="cts in contents.underWare_recomm">
+                        <div class="nvxie_recomment_item" v-for="content in cts">
+                            <div class="nvxie_recomment_img">
+                                <a><img :src="content.image"></a>
+                            </div>
+                            <div class="nvxie_recomment_info">
+                                <div class="recomment_title">[[content.title]]</div>
+                                <div class="recomment_price">￥[[content.price]]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#        家纺&家饰#}
+        <div class="list_model model03">
+            <div class="list_title clearfix">
+                <h3 class="fl" id="model01">
+                    <div></div>家居&家饰
+                </h3>
+                <div class="subtitle ">
+                    <a>收纳宝盒</a>|
+                    <a>手机壳</a>|
+                    <a>美发神器</a>|
+                    <a>充电宝</a>
+{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
+{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+                </div>
+            </div>
+            <div class="goods_con clearfix">
+                <div class="goods_banner3 fl">
+                    <img  src="../static/images/banner06.png">
+                </div>
+                <div class="jiaju goods_list_con pos_center_con" v-for="cts in contents.home_textile">
+                    <div class="goods_list_a" v-for="content in cts">
+                        <a>
+                            <img :src="content.image" alt="幻灯片01">
+                        </a>
+                        <a class="today_grab_title">[[content.title]]</a>
+                        <div class="today_grab_info">
+                            <span class="t1">￥ [[content.price]]</span>
+                        </div>
+                    </div>
+                 </div>
+                <ul class="point point_jiaju"></ul>
+                <div class="nvxie_recomment">
+                    <div class="nvxie_recomment_title">
+                        <span class="title">热品商品推销</span>
+                        <span class="jiaju_change"><img src="../static/images/change.png">换一批</span>
+                    </div>
+                    <div class="jiaju_recomm nvxie_recomment_goods" v-for="cts in contents.jiaju_recomm">
+                        <div class="nvxie_recomment_item" v-for="content in cts">
+                            <div class="nvxie_recomment_img">
+                                <a><img :src="content.image"></a>
+                            </div>
+                            <div class="nvxie_recomment_info">
+                                <div class="recomment_title">[[content.title]]</div>
+                                <div class="recomment_price">￥[[content.price]]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#        母婴&童装#}
+        <div class="list_model model03">
+            <div class="list_title clearfix">
+                <h3 class="fl" id="model01">
+                    <div></div>母婴&童装
+                </h3>
+                <div class="subtitle ">
+                    <a>孕妇装</a>|
+                    <a>童装</a>|
+                    <a>婴儿洗护</a>|
+                    <a>亲子装</a>
+                </div>
+            </div>
+            <div class="goods_con clearfix">
+                <div class="goods_banner3 fl">
+                    <img  src="../static/images/banner07.png">
+                </div>
+                <div class="mvying goods_list_con pos_center_con" v-for="cts in contents.mvying">
+                    <div class="goods_list_a" v-for="content in cts">
+                        <a>
+                            <img :src="content.image" alt="幻灯片01">
+                        </a>
+                        <a class="today_grab_title">[[content.title]]</a>
+                        <div class="today_grab_info">
+                            <span class="t1">￥ [[content.price]]</span>
+                        </div>
+                    </div>
+                 </div>
+                <ul class="point point_mvying"></ul>
+                <div class="nvxie_recomment">
+                    <div class="nvxie_recomment_title">
+                        <span class="title">热品商品推销</span>
+                        <span class="mvying_change"><img src="../static/images/change.png">换一批</span>
+                    </div>
+                    <div class="mvying_recomm nvxie_recomment_goods" v-for="cts in contents.mvying_recomm">
+                        <div class="nvxie_recomment_item" v-for="content in cts">
+                            <div class="nvxie_recomment_img">
+                                <a><img :src="content.image"></a>
+                            </div>
+                            <div class="nvxie_recomment_info">
+                                <div class="recomment_title">[[content.title]]</div>
+                                <div class="recomment_price">￥[[content.price]]</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{#        猜你喜欢#}
+    <div class="list_model model03">
+        <div class="list_title clearfix">
+                <h3 class="fl" id="model01">
+                    <div></div>猜你喜欢
+                </h3>
+        </div>
+        <div>
+            <ul>
+                <li><a href="#">我序号是1</a></li>
+                <li><a href="#">我序号是2</a></li>
+                <li><a href="#">我序号是3</a></li>
+                <li><a href="#">我序号是4</a></li>
+                <li><a href="#">我序号是5</a></li>
+                <li><a href="#">我序号是6</a></li>
+                <li><a href="#">我序号是7</a></li>
+                <li><a href="#">我序号是8</a></li>
+                <li><a href="#">我序号是9</a></li>
+                <li><a href="#">我序号是10</a></li>
+                <li><a href="#">我序号是11</a></li>
+                <li><a href="#">我序号是12</a></li>
+                <li><a href="#">我序号是13</a></li>
+                <li><a href="#">我序号是14</a></li>
+                <li><a href="#">我序号是15</a></li>
+                <li><a href="#">我序号是16</a></li>
+                <li><a href="#">我序号是17</a></li>
+                <li><a href="#">我序号是18</a></li>
+                <li><a href="#">我序号是19</a></li>
+                <li><a href="#">我序号是20</a></li>
+            </ul>
+        </div>
+    </div>
+	<div class="footer">
+		<div class="foot_link">
+			<a href="#">关于我们</a>
+			<span>|</span>
+			<a href="#">联系我们</a>
+			<span>|</span>
+			<a href="#">招聘人才</a>
+			<span>|</span>
+			<a href="#">友情链接</a>		
+		</div>
+		<p>CopyRight © 2016 北京美多商业股份有限公司 All Rights Reserved</p>
+		<p>电话：010-****888    京ICP备*******8号</p>
+	</div>
+	</div>
+    <script type="text/javascript">
+        //传到vue中
+        let goods = {{ goods | safe }};
+        let contents = {{ contents | safe }};
+    </script>
+    <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/index.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/lbt.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/nvzhuang.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/nvxie.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/nanxie.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/neiyi.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/jiaju.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/mvying.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/nvxie_recomm.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/nanxie_recomm.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/neiyi_recomm.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/jiaju_recomm.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/mvying_recomm.js') }}"></script>
+</body>
+</html>

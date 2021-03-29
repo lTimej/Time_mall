@@ -9,7 +9,7 @@ from goods.models import Spu, GoodsCategory, Sku, SpuSpecification, SpuDescs, Sp
 htt = settings.HTT
 htts = settings.HTTS
 #spu商品列表
-def get_spu(sort=None,p_r=None):
+def get_spu(category_id,sort=None,p_r=None):
     skus_list = []
     sku_list = []
     #构造商品排列顺序
@@ -40,20 +40,23 @@ def get_spu(sort=None,p_r=None):
                 price_range = p_r.split('_')
                 lp = price_range[0]
                 rp = price_range[1]
-                skus_obj = Sku.objects.filter(Q(title=sku_title)&Q(now_price__lte=rp)&Q(now_price__gte=lp)).order_by(sort_sequence).first()
+                skus_obj = Sku.objects.filter(Q(title=sku_title)&Q(now_price__lte=rp)&Q(now_price__gte=lp)&Q(category_id=category_id)).order_by(sort_sequence).first()
             else:
-                skus_obj = Sku.objects.filter(title=sku_title).order_by(sort_sequence).first()
-            title = skus_obj.title
-            img = skus_obj.default_image
-            price = skus_obj.price
-            now_price = skus_obj.now_price
-            spu_id = skus_obj.spu_id
-            sku_dict['image'] = htt + str(img)
-            sku_dict['title'] = title
-            sku_dict['price'] = str(price)
-            sku_dict['now_price'] = str(now_price)
-            sku_dict['url'] = htts + 'detail/' + str(spu_id) +'/'
-            skus_list.append(sku_dict)
+                skus_obj = Sku.objects.filter(title=sku_title,category_id=category_id).order_by(sort_sequence).first()
+            try:
+                title = skus_obj.title
+                img = skus_obj.default_image
+                price = skus_obj.price
+                now_price = skus_obj.now_price
+                spu_id = skus_obj.spu_id
+                sku_dict['image'] = htt + str(img)
+                sku_dict['title'] = title
+                sku_dict['price'] = str(price)
+                sku_dict['now_price'] = str(now_price)
+                sku_dict['url'] = htts + 'detail/' + str(spu_id) +'/'
+                skus_list.append(sku_dict)
+            except:
+                return http.HttpResponseNotFound('GoodsCategory does not exist')
     except Sku.DoesNotExist:
         return http.HttpResponseNotFound('GoodsCategory does not exist')
     return skus_list
@@ -62,14 +65,13 @@ def get_pagination_data(skus_dict,page,per_page_num):
     sku_dict = {}
     #分页器对象
     # Paginator(object_list, per_page_data)
-    print(len(skus_dict))
     paginator = Paginator(skus_dict, per_page_num)
-    # 获取列表页总页数
-    total_page = paginator.num_pages
-    try:
+    try:#判断页表页是否存在
+        # 获取列表页总页数
+        total_page = paginator.num_pages
         #展示第几页数据
         page_skus = paginator.page(page)
-    except EmptyPage:
+    except:
         return http.HttpResponseNotFound('empty page')
 
     #转换成Vue能渲染的数据，不能识别QuerySet数据
@@ -131,6 +133,7 @@ def get_sku(spu_id,detail_image,desc_dict):
     goods_detail['detail_image'] = detail_image
     goods_detail['desc_dict'] = desc_dict
     goods_detail['spec_dict'] = spec_dict
+    goods_detail['spu_id'] = spu_id
     return goods_detail
 #商品sku图
 def get_sku_image(spu_id):
