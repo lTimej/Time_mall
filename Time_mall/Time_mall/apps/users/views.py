@@ -1,6 +1,7 @@
 import json,re,logging
 
 from django import http
+from django.conf import settings
 from django.views import View
 from django.urls import reverse
 from django.db import DatabaseError
@@ -11,6 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import login,authenticate,logout
 
 from cart.utils import combine_carts
+from goods.models import Sku
 from users.models import User,Address
 from Time_mall.utils import constants,response_code
 from Time_mall.utils.view import MyLoginRequiredMixin
@@ -18,7 +20,7 @@ from celery_tasks.email.tasks import send_verify_email
 from users.utils import generate_email_token, get_email_info
 
 '''
-                     用户相关操作：logging logout register username_verify mobile_verify email address
+用户相关操作：logging logout register username_verify mobile_verify email address
 '''
 
 #日志器
@@ -522,3 +524,23 @@ class UpdatePasswordView(View):
         :return:
         '''
         return render(request,'update_password.html')
+
+#用户浏览记录
+class UserHistoryView(LoginRequiredMixin,View):
+    def get(self,request):
+        redis_conn = get_redis_connection('history')
+        skus_id = redis_conn.lrange('history_%s'%request.user.id,0,-1)
+        histories = list()
+        if skus_id:
+            for sku_id in skus_id:
+                sku_obj = Sku.objects.get(id=sku_id)
+                history = {
+                    'title' : sku_obj.title,
+                    'price' : str(sku_obj.price),
+                    'now_price':str(sku_obj.now_price),
+                    'img' : settings.HTT + str(sku_obj.skuimage_set.first().image),
+                    'spu_id':sku_obj.spu_id
+                }
+                histories.append(history)
+        print(histories)
+        return http.JsonResponse({'code':'ok',"histories":histories})

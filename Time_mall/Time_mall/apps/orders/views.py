@@ -101,6 +101,7 @@ class OrderView(View):
                     total_amount=total_price,
                     freight=freight,
                     pay_method=pay_method,
+                    #判断支付方式，如果为货到付款则修改为代发货状态
                     status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'] if pay_method == OrderInfo.PAY_METHODS_ENUM[
                         'ALIPAY'] else
                     OrderInfo.ORDER_STATUS_ENUM['UNSEND']
@@ -214,7 +215,8 @@ class CommitOrderView(View):
 #用户订单列表
 class UserOrderView(LoginRequiredMixin,View):
     def get(self,request,page):
-        orderInfo_query = OrderInfo.objects.filter(is_deleted=False)
+        user = request.user
+        orderInfo_query = OrderInfo.objects.filter(is_deleted=False,user=user)
         #构造前端数据/home/time/app_public_key.pem
         orders = list()
         for orderInfo_obj in orderInfo_query:

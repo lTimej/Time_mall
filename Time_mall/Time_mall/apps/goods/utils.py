@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage
 
+
 from goods import constants
 from goods.models import Spu, GoodsCategory, Sku, SpuSpecification, SpuDescs, SpecificationOption, SkuSpecification
 
@@ -134,7 +135,7 @@ def get_sku(spu_id,detail_image,desc_dict):
     goods_detail['desc_dict'] = desc_dict
     goods_detail['spec_dict'] = spec_dict
     goods_detail['spu_id'] = spu_id
-    return goods_detail
+    return goods_detail,sku_obj.id
 #商品sku图
 def get_sku_image(spu_id):
     sku_query= Sku.objects.filter(spu_id=spu_id)
@@ -160,7 +161,7 @@ def get_detail_image(spu_id):
         desc_dict['title'] = title
     desc_dict['image'] = desc_img
     return desc_dict
-
+#切换sku图
 def get_img(spec_title,spec_id,spec_label,flag):
     spec_option_obj = SpecificationOption.objects.filter(value=spec_title, spec_id=spec_id).first()
     spec_option_id = spec_option_obj.id

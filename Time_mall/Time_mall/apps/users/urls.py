@@ -33,5 +33,7 @@ urlpatterns = [
     url(r"^set/default/address/(?P<iid>\d+)/$", views.SetDefaultAddressView.as_view()),
     #修改密码
     url(r"^update/password/$", views.UpdatePasswordView.as_view(),name='upass'),
+    #用户历史记录
+    url(r'^history/$',views.UserHistoryView.as_view(),name='history'),
 
 ]

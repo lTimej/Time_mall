@@ -9,4 +9,6 @@ urlpatterns = [
     url(r'^detail/(?P<spu_id>\d+)/$', views.GoodsDetailView.as_view(),name='detail'),
     #sku
     url(r'^sku/$', views.SkuView.as_view(),name='sku'),
+    #热销
+    url(r'^hot/(?P<category_id>\d+)/$',views.HotView.as_view(),name='hot'),
 ]
