@@ -2,9 +2,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-	<title>美多商城-订单提交成功</title>
+	<title>Time商城-订单提交成功</title>
 	<link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
 	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ static('css/order.css') }}">
 	<script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
 </head>
@@ -12,7 +13,7 @@
 	<div id="app">
 	<div class="header_con">
 		<div class="header" v-cloak>
-			<div class="welcome fl">欢迎来到美多商城!</div>
+			<div class="welcome fl">欢迎来到Time商城!</div>
 			<div class="fr">
                 <div v-if="username" class="login_btn fl">
                     欢迎您：<em>[[ username ]]</em>
@@ -26,44 +27,85 @@
                 </div>
 				<div class="user_link fl">
 					<span>|</span>
-					<a href="{{ url('users:info') }}">用户中心</a>
+					<a href="{{ url('users:userinfo') }}">用户中心</a>
 					<span>|</span>
-					<a href="{{ url('carts:info') }}">我的购物车</a>
+					<a href="{{ url('cart:cartlist') }}">我的购物车</a>
 					<span>|</span>
-					<a href="user_center_order.html">我的订单</a>
+					<a href="{{ url("orders:userorder",args=(1,)) }}">我的订单</a>
 				</div>
 			</div>
 		</div>		
 	</div>
 	<div class="search_bar clearfix">
 		<a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
-		<div class="search_wrap fl">
-			<form method="get" action="/search/" class="search_con">
-                <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
-                <input type="submit" class="input_btn fr" name="" value="搜索">
-            </form>
-			<ul class="search_suggest fl">
-				<li><a href="#">索尼微单</a></li>
-				<li><a href="#">优惠15元</a></li>
-				<li><a href="#">美妆个护</a></li>
-				<li><a href="#">买2免1</a></li>
-			</ul>
-		</div>
+
 	</div>
-	<div class="common_list_con clearfix">
-        <div class="order_success">
-            <p><b>订单提交成功，订单总价<em>¥{{ payment_amount }}</em></b></p>
-            <p>您的订单已成功生成，选择您想要的支付方式，订单号：{{ order_id }}</p>
-            <p><a href="user_center_order.html">您可以在【用户中心】->【我的订单】查看该订单</a></p>
+    <div class="payment">
+        <div class="process_wrap">
+            <div class="buy_process">
+                <div class="buy_process_wrap">
+                    <div class="buy_process_title">
+                        <a>
+                            <span class="title">Time商城</span>
+                        </a>
+                        <span class="pay">支付</span>
+
+                    </div>
+                    <div class="buy_process_item">
+                        <div class="process_bar_gray">
+                            <div class="process_bar p3"></div>
+                            <i class="process_point1">
+                                1
+                                <a href="{{ url("cart:cartlist") }}" class="process">购物车</a>
+                            </i>
+                            <i class="process_point2">
+                                2
+                                <a href="{{ url("orders:orderlist") }}" class="process">确定订单</a>
+                            </i>
+                            <i class="process_point3">
+                                3
+                                <a class="process c">支付</a>
+                            </i>
+                            <i class="process_point4">
+                                4
+                                <a class="process">完成</a>
+                            </i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="order_submit clearfix">
-        {% if pay_method == '1' %}
-            <a href="{{ url('contents:index') }}">继续购物</a>
-        {% else %}
-            <a @click="order_payment" class="payment">去支付</a>
-        {% endif %}
+	<div class="common_list_con clearfix">
+        <div class="order_left">
+            <div class="order_success">
+                <p>
+                    <b>
+
+                        <em>
+                            订单提交成功，订单总价
+                            ¥[[orders.total_price]]
+                        </em>
+                        <em>
+                            订单号：[[orders.order_id]]
+                        </em>
+                    </b>
+                </p>
+            </div>
+            <div class="sku">
+                <span>
+                    [[orders.sku_title]]等<em>[[orders.sku_count]]</em>件
+                </span>
+                <p v-show="orders.pay_method==2">请您于<em>00点20分30</em>完成支付<span class="yq">(逾期将被取消订单)</span></p>
+            </div>
+            <p class="order_center"><a href="{{ url("orders:userorder",args=(1,)) }}">您可以在【用户中心】->【我的订单】查看该订单</a></p>
+        </div>
+        <div class="order_confirm clearfix">
+            <a href="{{ url('contents:index') }}" v-if="orders.pay_method==1">继续购物</a>
+            <a @click="order_payment" class="payment" v-if="orders.pay_method==2">去支付</a>
+        </div>
     </div>
+
 	<div class="footer">
 		<div class="foot_link">
 			<a href="#">关于我们</a>
@@ -78,7 +120,10 @@
 		<p>电话：010-****888    京ICP备*******8号</p>
 	</div>
 	</div>
+    <script type="text/javascript">
+        let orders = {{ orders | safe }}
+    </script>
 	<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
-	<script type="text/javascript" src="{{ static('js/order_success.js') }}"></script>
+	<script type="text/javascript" src="{{ static('js/summit_order.js') }}"></script>
 </body>
 </html>

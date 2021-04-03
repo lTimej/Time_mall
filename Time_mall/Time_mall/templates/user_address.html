@@ -10,6 +10,7 @@
 </head>
 <body>
 	<div id="app">
+{#        用户基本信息#}
 	<div class="header_con">
 		<div class="header" v-cloak>
 			<div class="welcome fl">欢迎来到美多商城!</div>
@@ -26,15 +27,16 @@
                 </div>
 				<div class="user_link fl">
 					<span>|</span>
-					<a href="{{ url('users:info') }}">用户中心</a>
+					<a href="{{ url('users:userinfo') }}">用户中心</a>
 					<span>|</span>
-					<a href="cart.html">我的购物车</a>
+					<a href="">我的购物车</a>
 					<span>|</span>
-					<a href="user_center_order.html">我的订单</a>
+					<a href="">我的订单</a>
 				</div>
 			</div>
 		</div>		
 	</div>
+{#        搜索#}
 	<div class="search_bar clearfix">
 		<a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
 		<div class="search_wrap fl">
@@ -50,26 +52,28 @@
 			</ul>
 		</div>		
 	</div>
+
 	<div class="main_con clearfix">
 		<div class="left_menu_con clearfix">
 			<h3>用户中心</h3>
 			<ul>
-				<li><a href="{{ url('users:info') }}">· 个人信息</a></li>
+				<li><a href="{{ url('users:userinfo') }}">· 个人信息</a></li>
 				<li><a href="{{ url('users:address') }}" class="active">· 收货地址</a></li>
-                <li><a href="user_center_order.html">· 全部订单</a></li>
-				<li><a href="user_center_pass.html">· 修改密码</a></li>
+                <li><a href="{{ url("orders:userorder",args=(1,)) }}">· 全部订单</a></li>
+				<li><a href="">· 修改密码</a></li>
 			</ul>
 		</div>
         <div class="right_content clearfix" v-cloak>
             <div class="site_top_con">
-                <a @click="show_add_site">新增收货地址</a>
-                <span>你已创建了<b>[[ addresses.length ]]</b>个收货地址，最多可创建<b>20</b>个</span>
+                <a @click="add_address">新增收货地址</a>
+                <span>你已创建了<b>[[ addresses.length ]]</b>个收货地址，最多可创建<b>5</b>个</span>
             </div>
+{#            显示用户地址#}
             <div class="site_con" v-for="(address, index) in addresses">
                 <div class="site_title">
                     <div v-if="edit_title_index===index">
-                        <input v-model="new_title" type="text" name="">
-                        <input @click="save_title(index)" type="button" name="" value="保 存">
+                        <input v-model="new_title" @blur="check_update_title" type="text" name="" :placeholder="error_title_msg">
+                        <input @click="save_title(index,address.id)" type="button" name="" value="保 存">
                         <input @click="cancel_title(index)" type="reset" name="" value="取 消">
                     </div>
                     <div>
@@ -93,6 +97,7 @@
                     <a @click="show_edit_site(index)" class="edit_icon">编辑</a>
                 </div>
             </div>
+
         </div>
 	</div>
 	<div class="footer">
@@ -108,10 +113,13 @@
 		<p>CopyRight © 2016 北京美多商业股份有限公司 All Rights Reserved</p>
 		<p>电话：010-****888    京ICP备*******8号</p>
 	</div>
+
+{#        新增和修改编辑框#}
 	<div class="pop_con" v-show="is_show_edit" v-cloak>
 		<div class="site_con site_pop">
             <div class="site_pop_title">
-                <h3>新增收货地址</h3>
+                <h3 v-if="editing_address_index">修改收货地址</h3>
+                <h3 v-else>新增收货地址</h3>
                 <a @click="is_show_edit=false">×</a>
             </div>
             <form>
@@ -152,19 +160,22 @@
                     <input v-model="form_address.email" @blur="check_email" type="text" class="email">
                     <span v-show="error_email" class="email_error">邮箱信息有误</span>
                 </div>
-                <input @click="save_address" type="button" name="" value="新 增" class="info_submit">
+                <input @click="save_address" type="button" name="" value="修 改" class="info_submit" v-if="editing_address_index">
+                <input @click="save_address" type="button" name="" value="新 增" class="info_submit" v-else>
                 <input @click="is_show_edit=false" type="reset" name="" value="取 消" class="info_submit info_reset">
             </form>
 		</div>
 		<div class="mask"></div>
 	</div>
+
 	</div>
     <script type="text/javascript">
-		let addresses = {{ addresses | safe }};
+		let addresses1 = {{ addresses | safe }};
 		let default_address_id = "{{ default_address_id }}";
         {#let default_address_id = {{ default_address_id }};#}
     </script>
 	<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
-	<script type="text/javascript" src="{{ static('js/user_center_site.js') }}"></script>
+	<script type="text/javascript" src="{{ static('js/user_address.js') }}"></script>
+
 </body>
 </html>

@@ -18,13 +18,14 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,os.path.join(BASE_DIR,'apps'))
+sys.path.insert(0,os.path.join(BASE_DIR,'utils'))
 print("导包路径",sys.path)
-
+page_url = sys.path
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '+ny2=6v+=@%703$1sej58tmm4f(g6c1r((-+$g(n2x#6bfll=y'
+SECRET_KEY = '?woshinibabanicaidedaoma?'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -41,7 +42,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users'
+    'users',#用户
+    'contents',#首页
+    'verify',#验证
+    'oauths',#第三方
+    'areas',#地址
+    'goods',#商品
+    'cart',#购物车
+    'orders',#订单
+    'payments',#支付功能
+    'buys',#立即购买
+    'django_crontab',#定时任务
 ]
 
 MIDDLEWARE = [
@@ -120,6 +131,27 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+    'history':{#用户浏览记录
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "carts": { # 购物车，采用4号Redis库。
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "buys": { # 购物车，采用5号Redis库。
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/5",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
@@ -163,7 +195,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 #静态文件路径
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
 #配置工程日志
 LOGGING = {
     'version': 1,
@@ -215,7 +249,7 @@ AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = ['users.utils.MyAuthenticate']
 
 #指定用户重定向地址
-LOGIN_URL = "/login/"
+LOGIN_URL = "/login"
 
 # Celery配置
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/10'
@@ -225,3 +259,45 @@ CELERY_ACCEPT_CONTENT = ['json']
 # CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
 CELERY_TASK_SERIALIZER = 'json'
 
+# QQ登录的配置参数
+QQ_CLIENT_ID = '101518219'
+QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
+QQ_REDIRECT_URI = 'http://192.168.1.132:8081/oauth_callback'
+
+# #配置邮件服务器
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # 导入邮件模块
+EMAIL_HOST = 'smtp.yeah.net' # 发邮件主机
+EMAIL_PORT = 25 # 发邮件端口
+EMAIL_HOST_USER = 'liujun19950425@yeah.net' # 授权的邮箱
+EMAIL_HOST_PASSWORD = 'SFFGEWDKRPVFUMAQ' # 邮箱授权时获得的密码，非注册登录密码
+EMAIL_FROM = 'liujun19950425@yeah.net' # 发件人抬头
+
+# 邮箱验证链接
+EMAIL_VERIFY_URL = 'http://192.168.1.132:8081/email/verify/'
+
+
+HTT = "http://192.168.1.132:8888/"
+HTTS = "http://192.168.1.132:8081/"
+
+# 支付宝SDK配置参数
+
+ALIPAY_APPID = '2016102600765516'
+ALIPAY_DEBUG = True
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+# 验证回调
+ALIPAY_RETURN_URL = 'http://192.168.1.132:8081/payment/status/'
+
+# 指定自定义的Django文件存储类
+DEFAULT_FILE_STORAGE = 'Time_mall.Time_mall.utils.view.FastDFSStorage'
+
+# FastDFS相关参数
+FDFS_BASE_URL = 'http://192.168.1.132:8888/'
+
+# 定时器配置
+CRONJOBS = [
+    # 每1分钟生成一次首页静态文件
+    ('*/1 * * * *', 'contents.pageStatic.get_static_page', '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log'))
+]
+
+# 指定中文编码格式
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'

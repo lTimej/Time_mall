@@ -19,7 +19,7 @@
     <div id="app">
 	<div class="register_con">
 		<div class="l_con fl">
-			<a href="#" class="reg_logo"><img src="../static/images/logo.png"></a>
+			 <a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
 			<div class="reg_slogan">商品美 · 种类多 · 欢迎光临</div>
 			<div class="reg_banner"></div>
 		</div>
@@ -74,7 +74,6 @@
 							<span class="error_tip" v-show="error_allow">请勾选用户协议</span>
 						</li>
 						<li class="reg_sub">
-
 							<input type="submit" value="注 册">
 						</li>
 					</ul>				

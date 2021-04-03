@@ -12,7 +12,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django_redis import get_redis_connection
 # Create your views here.
-from Time_mall.utils.response_code import RETCODE
+from response_code import RETCODE
 
 from goods import constants
 from goods.models import Sku

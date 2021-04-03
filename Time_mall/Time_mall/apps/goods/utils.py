@@ -126,6 +126,8 @@ def get_sku(spu_id,detail_image,desc_dict):
     price = sku_obj.price
     now_price = sku_obj.now_price
     default_image = sku_obj.default_image
+    comments = sku_obj.comments
+    sales = sku_obj.sales
     goods_detail['title'] = title
     goods_detail['price'] = str(price)
     goods_detail['now_price'] = str(now_price)
@@ -135,6 +137,8 @@ def get_sku(spu_id,detail_image,desc_dict):
     goods_detail['desc_dict'] = desc_dict
     goods_detail['spec_dict'] = spec_dict
     goods_detail['spu_id'] = spu_id
+    goods_detail['comments'] = comments
+    goods_detail['sales'] = sales
     return goods_detail,sku_obj.id
 #商品sku图
 def get_sku_image(spu_id):
@@ -171,17 +175,23 @@ def get_img(spec_title,spec_id,spec_label,flag):
     img = sku_obj.skuimage_set.first().image
     price = sku_obj.price
     now_price = sku_obj.now_price
+    comments = sku_obj.comments
+    sales = sku_obj.sales
     if flag == 0:
         context = {
             'sku_id':sku_id,
             'img': htt + str(img),
             'price':price,
-            'now_price':now_price
+            'now_price':now_price,
+            'comments':comments,
+            "sales":sales
         }
     else:
         context = {
             'img': htt + str(img),
             'price': price,
-            'now_price': now_price
+            'now_price': now_price,
+            'comments': comments,
+            "sales": sales
         }
     return context

@@ -2,126 +2,269 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-	<title>美多商城-订单确认</title>
+	<title>Time商城-订单确认</title>
 	<link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ static('css/order.css') }}">
 	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
 	<script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
 </head>
 <body>
 	<div id="app">
-	<div class="header_con">
-		<div class="header" v-cloak>
-			<div class="welcome fl">欢迎来到美多商城!</div>
-			<div class="fr">
-                <div v-if="username" class="login_btn fl">
-                    欢迎您：<em>[[ username ]]</em>
-                    <span>|</span>
-                    <a href="{{ url('users:logout') }}">退出</a>
+        <div class="header_con">
+            <div class="header" v-cloak>
+                <div class="welcome fl">欢迎来到Time商城!</div>
+                <div class="fr">
+                    <div v-if="username" class="login_btn fl">
+                        欢迎您：<em>[[ username ]]</em>
+                        <span>|</span>
+                        <a href="{{ url('users:logout') }}">退出</a>
+                    </div>
+                    <div v-else class="login_btn fl">
+                        <a href="{{ url('users:login') }}">登录</a>
+                        <span>|</span>
+                        <a href="{{ url('users:register') }}">注册</a>
+                    </div>
+                    <div class="user_link fl">
+                        <span>|</span>
+                        <a href="{{ url('users:userinfo') }}">用户中心</a>
+                        <span>|</span>
+                        <a href="{{ url('cart:cartlist') }}">我的购物车</a>
+                        <span>|</span>
+                        <a href="{{ url("orders:userorder",args=(1,)) }}">我的订单</a>
+                    </div>
                 </div>
-                <div v-else class="login_btn fl">
-                    <a href="{{ url('users:login') }}">登录</a>
-                    <span>|</span>
-                    <a href="{{ url('users:register') }}">注册</a>
+            </div>
+        </div>
+        <div class="search_bar clearfix">
+            <a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
+            <div class="search_wrap fl">
+                <form method="get" action="/search/" class="search_con">
+                    <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
+                    <input type="submit" class="input_btn fr" name="" value="搜索">
+                </form>
+                <ul class="search_suggest fl">
+                    <li><a href="#">索尼微单</a></li>
+                    <li><a href="#">优惠15元</a></li>
+                    <li><a href="#">美妆个护</a></li>
+                    <li><a href="#">买2免1</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="order">
+            <div class="buy_process">
+                <div class="buy_process_wrap">
+                    <div class="buy_process_item">
+                        <div class="process_bar_gray">
+                            <div class="process_bar p2"></div>
+                            <i class="process_point1">
+                                1
+                                <a href="{{ url("cart:cartlist") }}" class="process">购物车</a>
+                            </i>
+                            <i class="process_point2">
+                                2
+                                <a class="process c">确定订单</a>
+                            </i>
+                            <i class="process_point3">
+                                3
+                                <a class="process">支付</a>
+                            </i>
+                            <i class="process_point4">
+                                4
+                                <a class="process">完成</a>
+                            </i>
+                        </div>
+                    </div>
                 </div>
-				<div class="user_link fl">
-					<span>|</span>
-					<a href="{{ url('users:info') }}">用户中心</a>
-					<span>|</span>
-					<a href="{{ url('carts:info') }}">我的购物车</a>
-					<span>|</span>
-					<a href="user_center_order.html">我的订单</a>
-				</div>
-			</div>
-		</div>		
-	</div>
-	<div class="search_bar clearfix">
-		<a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
-		<div class="search_wrap fl">
-			<form method="get" action="/search/" class="search_con">
-                <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
-                <input type="submit" class="input_btn fr" name="" value="搜索">
-            </form>
-			<ul class="search_suggest fl">
-				<li><a href="#">索尼微单</a></li>
-				<li><a href="#">优惠15元</a></li>
-				<li><a href="#">美妆个护</a></li>
-				<li><a href="#">买2免1</a></li>
-			</ul>
-		</div>
-	</div>
-	<h3 class="common_title">确认收货地址</h3>
-    <div class="common_list_con clearfix" id="get_site">
-        <dl>
-        {% if addresses %}
-            <dt>寄送到：</dt>
-            {% for address in addresses %}
-            <dd @click="nowsite={{ address.id }}"><input type="radio" v-model="nowsite" value="{{ address.id }}">{{ address.province }} {{ address.city }} {{ address.district }} （{{ address.receiver }} 收） {{ address.mobile }}</dd>
-            {% endfor %}
-        {% endif %}
-        </dl>
-        <a href="{{ url('users:address') }}" class="edit_site">编辑收货地址</a>
-    </div>
-    <h3 class="common_title">支付方式</h3>
-    <div class="common_list_con clearfix">
-        <div class="pay_style_con clearfix">
-            <input type="radio" name="pay_method" value="1" v-model="pay_method">
-            <label class="cash">货到付款</label>
-            <input type="radio" name="pay_method" value="2" v-model="pay_method">
-            <label class="zhifubao"></label>
+            </div>
+            <div class="order_item">
+                <h3 class="common_title">选择收获地址</h3>
+                <div class="order_address">
+                    <ul class="address">
+                        <li v-for="(address,index) in addresses">
+                            <a class="address_item" :class="{address_selected:addrSelec==index}" @click="changeAddr(index)">
+                                <i class="showDefaultAddr" v-show="address.id==default_address_id">默认地址</i>
+                                <h5>[[address.receiver]]</h5>
+                                <p class="street">[[address.province]][[address.city]][[address.district]]</p>
+                                <p class="province">[[address.place]]</p>
+                                <p class="phone">[[address.mobile]]</p>
+                                <i class="address_edit" @click="address_edit(index)">编辑</i>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="update_address">
+                        <li class="manage_address">
+                            <a href="{{ url("users:address") }}">
+                                管理收货地址
+                            </a>
+                        </li>
+                        <li class="use_new_address">
+                            <a href="javascript:void(0)" @click="useNewAddr">
+                                使用新地址
+                            </a>
+                        </li>
+                    </ul>
+                    {#                    添加新地址#}
+                    <div class="addr_info" v-show="isShowAddr">
+                        <div class="addr_item">
+                            <dl class="addr">
+                                <dt class="prov_title">省：</dt>
+                                <dd class="prov">
+                                    <i class="needicon">*</i>
+                                    <select v-model="province_dict.province_id">
+                                        <option v-for="prov in province" :value="prov.id">[[prov.name]]</option>
+                                    </select>
+                                    <label class="dt">市：</label>
+                                    <select v-model="province_dict.city_id">
+                                        <option v-for="cy in city" :value="cy.id">[[cy.name]]</option>
+                                    </select>
+                                    <label class="dt">区：</label>
+                                    <select v-model="province_dict.district_id">
+                                        <option v-for="cs in countryside" :value="cs.id">[[cs.name]]</option>
+                                    </select>
+                                </dd>
+                                <dt class="prov_title">邮箱：</dt>
+                                <dd class="email">
+{#                                    <i class="needicon">*</i>#}
+                                    <input type="text" class="text em" v-model="province_dict.email" @blur="checkEmail">
+                                    <span v-show="error_email" class="email_error">邮箱格式有误</span>
+                                </dd>
+                                <dt class="prov_title">街道地址：</dt>
+                                <dd class="street">
+                                    <i class="needicon">*</i>
+                                    <textarea rows="3" cols="30" class="textarea" v-model="province_dict.place" @blur="checkPlace"></textarea>
+                                    <span v-show="error_place" class="place_error">请填写地址信息</span>
+                                    <span class="implit">请填写街道地址，最少5个字，最多不能超过35个字</span>
+                                </dd>
+                                <dt class="prov_title">收货人姓名：</dt>
+                                <dd class="prov">
+                                    <i class="needicon">*</i>
+                                    <input type="text" class="text em" v-model="province_dict.receiver" @blur="checkReceiver">
+                                    <span v-show="error_receiver" class="receiver_error">请填写收件人</span>
+                                </dd>
+                                <dt class="prov_title">手机：</dt>
+                                <dd class="prov">
+                                    <i class="needicon">*</i>
+                                    <input type="text" class="text em" v-model="province_dict.mobile" @blur="checkPhone">
+                                    <span v-show="error_mobile" class="mobile_error">手机信息有误</span>
+                                </dd>
+                                <dt class="prov_title"></dt>
+                                <dd class="prov">
+                                    <span v-show="error_all" class="mobile_error">信息不完整</span>
+                                    <a class="confirm_btn" @click="confirm_btn">确认地址</a>
+                                    <a class="cancel_btn" @click="cancel_addr_upd">取消</a>
+
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="common_title">支付方式</h3>
+                <div class="common_list_con clearfix">
+                    <div class="pay_style_con clearfix">
+                        <input type="radio" name="pay_method" value="1" v-model="pay_method">
+                        <label class="cash">货到付款</label>
+                        <input type="radio" name="pay_method" value="2" v-model="pay_method">
+                        <label class="zhifubao"></label>
+                    </div>
+                </div>
+                <div class="order_info">
+                    <div class="total_count">
+                        确认商品信息
+                    </div>
+                    <ul class="cart_list_th clearfix">
+                        <li class="col01">商品名称</li>
+                        <li class="col02">商品规格</li>
+                        <li class="col03">价格(元）</li>
+                        <li class="col04">数量</li>
+                        <li class="col05">优惠</li>
+                        <li class="col06">小计(元)</li>
+                    </ul>
+                    <div class="carts" v-cloak>
+                        <div class="carts_item" v-for="cart in carts">
+                            <ul>
+                {#                标题#}
+                                <li class="cart_title" style="cursor: pointer" >
+                                    <a class="title_img" :href="'/detail/'+cart.spu_id" target="_blank"><img :src="cart.img"></a>
+                                    <a class="title" :href="'/detail/'+cart.spu_id" target="_blank"><span>[[cart.title]]</span></a>
+                                </li>
+                {#                规格#}
+                                <li class="spec">
+                                    <p v-for="spec in cart.sku_specs">[[spec]]</p>
+                                </li>
+                {#                价格#}
+                                <li class="price">
+                                    <p>￥<span> [[cart.price]] </span></p>
+                                </li>
+                {#                数量#}
+                                <li class="num">
+                                    <p>[[cart.count]]</p>
+                                </li>
+                                {#                优惠#}
+                                <li class="youhui">
+                                    <p>活动价省[[cart.youhui]]元</p>
+                                </li>
+                {#                小计#}
+                                <li class="compute">
+                                    <p>[[cart.sku_amount_price]]</p>
+                                </li>
+                            </ul>
+                        </div>
+{#                        备注#}
+                        <div class="meto">
+                            <div class="mLeft">
+                                <label>备注：</label>
+                                <input type="text" placeholder="补充填写其他信息，如有快递不到也请留言备注">
+                            </div>
+                            <div class="mRight">
+                                <label>快递费：</label>
+                                <select>
+                                    <option>全国包邮</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="common_title">总金额结算</h3>
+                <div class="common_list_con clearfix">
+                    <div class="settle_con">
+                        <div class="total_goods_count">共<em>[[total_goods]]</em>件商品，总金额<b>[[origin_price]]元</b></div>
+                        <div class="transit">运费：<b>包邮</b></div>
+                        <div class="transit">已优惠：<b>[[yh]]</b></div>
+                        <div class="total_pay">实付款：<b>[[total_price]]元</b></div>
+                    </div>
+                </div>
+        {#        提交订单#}
+                <div class="order_submit clearfix">
+                    <a  id="order_btn" @click="submit_order">确定并付款 ></a>
+                </div>
+            </div>
         </div>
-    </div>
-    <h3 class="common_title">商品列表</h3>
-    <div class="common_list_con clearfix">
-        <ul class="goods_list_th clearfix">
-            <li class="col01">商品名称</li>
-            <li class="col02">商品单位</li>
-            <li class="col03">商品价格</li>
-            <li class="col04">数量</li>
-            <li class="col05">小计</li>
-        </ul>
-        {% for sku in skus %}
-        <ul class="goods_list_td clearfix">
-            <li class="col01">{{loop.index}}</li>
-            <li class="col02"><img src="{{ sku.default_image.url }}"></li>
-            <li class="col03">{{ sku.name }}</li>
-            <li class="col04">台</li>
-            <li class="col05">{{ sku.price }}元</li>
-            <li class="col06">{{ sku.count }}</li>
-            <li class="col07">{{ sku.amount }}元</li>
-        </ul>
-        {% endfor %}
-    </div>
-    <h3 class="common_title">总金额结算</h3>
-    <div class="common_list_con clearfix">
-        <div class="settle_con">
-            <div class="total_goods_count">共<em>{{ total_count }}</em>件商品，总金额<b>{{ total_amount }}元</b></div>
-            <div class="transit">运费：<b>{{ freight }}元</b></div>
-            <div class="total_pay">实付款：<b>{{ payment_amount }}元</b></div>
+{#        底部#}
+        <div class="footer">
+            <div class="foot_link">
+                <a href="#">关于我们</a>
+                <span>|</span>
+                <a href="#">联系我们</a>
+                <span>|</span>
+                <a href="#">招聘人才</a>
+                <span>|</span>
+                <a href="#">友情链接</a>
+            </div>
+            <p>CopyRight © 2016 北京美多商业股份有限公司 All Rights Reserved</p>
+            <p>电话：010-****888    京ICP备*******8号</p>
         </div>
-    </div>
-    <div class="order_submit clearfix">
-        <a @click="on_order_submit" id="order_btn">提交订单</a>
-    </div>
-	<div class="footer">
-		<div class="foot_link">
-			<a href="#">关于我们</a>
-			<span>|</span>
-			<a href="#">联系我们</a>
-			<span>|</span>
-			<a href="#">招聘人才</a>
-			<span>|</span>
-			<a href="#">友情链接</a>		
-		</div>
-		<p>CopyRight © 2016 北京美多商业股份有限公司 All Rights Reserved</p>
-		<p>电话：010-****888    京ICP备*******8号</p>
-	</div>
 	</div>
 	<script type="text/javascript">
-        let default_address_id = "{{ user.default_address.id }}";
-        let payment_amount = "{{ payment_amount }}";
+        let default_address_id = "{{ default_address }}";
+        {#let payment_amount = "{{ payment_amount }}";#}
+        let carts = {{ carts | safe }};
+        let addresses = {{ addresses | safe }};
+        let cartLen = {{ cartLen }};
+        let code = "{{ code }}"
     </script>
 	<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
-	<script type="text/javascript" src="{{ static('js/place_order.js') }}"></script>
+	<script type="text/javascript" src="{{ static('js/order.js') }}"></script>
+
 </body>
 </html>

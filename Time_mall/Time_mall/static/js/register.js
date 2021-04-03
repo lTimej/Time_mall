@@ -45,7 +45,7 @@ let vm = new Vue({
         //图片验证码
         generateCode(){
             this.uuid = generateUUID();
-            let url = 'http://127.0.0.1:8080/imgCode/' + this.uuid +'/';
+            let url = 'http://192.168.1.132:8081/imgCode/' + this.uuid +'/';
             this.img_url = url
         },
         //更换验证码
@@ -53,48 +53,16 @@ let vm = new Vue({
             this.generateCode();
         },
         //校验图片验证码
-        check_image_code()
-        {
+        check_image_code() {
             if(!this.image_code)
                 {
                     this.error_image_code_message = "验证码不为空"
                     this.error_image_code = true
                 }
-                // else if(res.data.code == 1 && this.image_code)
-                // {
-                //     this.error_image_code_message = res.data.error_info
-                //     this.error_image_code = true
-                //     this.generateCode()
-                // }
                 else{
                     this.error_image_code = false
                 }
         },
-        // check_image_code()
-        // {
-        //     axios.post(this.img_url,{
-        //         code:this.image_code,
-        //         csrfmiddlewaretoken:document.getElementsByName('csrfmiddlewaretoken'),
-        //     }).then(res=>{
-        //         this.img_code_flag = res.data.code
-        //         this.error_image_code_message = res.data.error_info
-        //         if(!this.image_code)
-        //         {
-        //             this.error_image_code_message = "请填写验证码"
-        //             this.error_image_code = true
-        //         }
-        //         else if(res.data.code == 1 && this.image_code)
-        //         {
-        //             this.error_image_code_message = res.data.error_info
-        //             this.error_image_code = true
-        //             this.generateCode()
-        //         }
-        //         else{
-        //             this.error_image_code = false
-        //         }
-        //     })
-        // },
-
         //短信验证
         check_sms_code(){
             console.log("进来了")
@@ -112,18 +80,14 @@ let vm = new Vue({
             }
 
         },
-
         //点击发送短信验证码
-        sendSmsCode()
-        {
+        sendSmsCode() {
             //避免重复发送
             if(this.sms_code_flag)
             {
-                console.log("发送失败")
                 return
             }
             this.sms_code_flag = true;
-            console.log("发送成功")
             this.check_image_code();
             this.check_mobile();
             //如果手机号和图片验证码错误可以继续点击发送
@@ -132,7 +96,7 @@ let vm = new Vue({
                 this.sms_code_flag = false;
                 return
             }
-            let sms_code_url = 'http://127.0.0.1:8080/smsCode/' + this.mobile + '?uuid=' +this.uuid +'&img_code=' + this.image_code
+            let sms_code_url = 'http://192.168.1.132:8081/smsCode/' + this.mobile + '?uuid=' +this.uuid +'&img_code=' + this.image_code
             axios.get(sms_code_url,{
                 responseType:"json"
             }).then(res=>{
@@ -175,8 +139,6 @@ let vm = new Vue({
                 this.sms_code_flag = false
             })
         },
-
-
         // 校验用户名
         check_username() {
             // 用户名是5-20个字符，[a-zA-Z0-9_-]
@@ -193,7 +155,7 @@ let vm = new Vue({
             }
             //用户名重复校验
             if(this.error_name == false){
-                axios.get('http://127.0.0.1:8080/userUnique/'+this.username+'/',{
+                axios.get('http://192.168.1.132:8081/userUnique/'+this.username+'/',{
                     responseType:'json'
                 }).then(res=>{
                     if (res.data.count != 0)
@@ -204,7 +166,6 @@ let vm = new Vue({
                 })
             }
         },
-
         // 校验密码
         check_password() {
             let re = /^[0-9A-Za-z]{8,16}$/;
@@ -233,7 +194,7 @@ let vm = new Vue({
             }
             //手机号重复校验
             if(this.error_mobile == false){
-                axios.get('http://127.0.0.1:8080/phone/'+this.mobile+'/',{
+                axios.get('http://192.168.1.132:8081/phone/'+this.mobile+'/',{
                     responseType:'json'
                 }).then(res=>{
                     if (res.data.count != 0)

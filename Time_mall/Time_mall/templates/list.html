@@ -1,189 +1,183 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-<head>
-	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-	<title>美多商城-商品列表</title>
-    <link rel="stylesheet" type="text/css" href="{{ static('css/jquery.pagination.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
-	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
-    <script type="text/javascript" src="{{ static('js/jquery-1.12.4.min.js') }}"></script>
-	<script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
-</head>
-<body>
-	<div id="app">
-	<div class="header_con">
-		<div class="header" v-cloak>
-			<div class="welcome fl">欢迎来到美多商城!</div>
-			<div class="fr">
-                <div v-if="username" class="login_btn fl">
-                    欢迎您：<em>[[ username ]]</em>
-                    <span>|</span>
-                    <a href="{{ url('users:logout') }}">退出</a>
-                </div>
-                <div v-else class="login_btn fl">
-                    <a href="{{ url('users:login') }}">登录</a>
-                    <span>|</span>
-                    <a href="{{ url('users:register') }}">注册</a>
-                </div>
-				<div class="user_link fl">
-					<span>|</span>
-					<a href="{{ url('users:info') }}">用户中心</a>
-					<span>|</span>
-					<a href="{{ url('carts:info') }}">我的购物车</a>
-					<span>|</span>
-					<a href="user_center_order.html">我的订单</a>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="search_bar clearfix">
-		<a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
-		<div class="search_wrap fl">
-			<form method="get" action="/search/" class="search_con">
-                <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
-                <input type="submit" class="input_btn fr" name="" value="搜索">
-            </form>
-			<ul class="search_suggest fl">
-				<li><a href="#">索尼微单</a></li>
-				<li><a href="#">优惠15元</a></li>
-				<li><a href="#">美妆个护</a></li>
-				<li><a href="#">买2免1</a></li>
-			</ul>
-		</div>
-		<div class="guest_cart fr">
-			<a href="{{ url('carts:info') }}" class="cart_name fl">我的购物车</a>
-			<div class="goods_count fl" id="show_count">2</div>
-			<ul class="cart_goods_show">
+{% extends "layout.html" %}
+{% block title %}
+    <title>Time商城-商品列表</title>
+{% endblock %}
+
+{% block content %}
+    {#        分类标题#}
+        <div class="goods_menu" >
+            <h1 class="fl" @mouseover="isShowMenu=true" @mouseleave="isShowMenu=false">主题市场</h1>
+            <ul class="navlist fl">
 				<li>
-					<img src="{{ static('images/goods/goods001.jpg') }}" alt="商品图片">
-					<h4>华为 HUAWEI P10 Plus 6GB+64GB 钻雕金 移动联通电信4G手机 双卡双待</h4>
-					<div>1</div>
-				</li>
-				<li>
-					<img src="{{ static('images/goods/goods002.jpg') }}" alt="商品图片">
-					<h4>Apple iPhoneX 64GB 深空灰色 移动联通电信4G手机</h4>
-					<div>1</div>
-				</li>
-			</ul>			
-		</div>
-	</div>
-	<div class="navbar_con">
-		<div class="navbar">
-			<div class="sub_menu_con fl">
-				<h1 class="fl">商品分类</h1>
-				<ul class="sub_menu">
-                    {% for group in categories.values() %}
-                    <li>
-                        <div class="level1">
-                            {% for channel in group.channels %}
-                            <a href="{{ channel.url }}">{{ channel.name }}</a>
-                            {% endfor %}
-                        </div>
-                        <div class="level2">
-                            {% for cat2 in group.sub_cats %}
-                            <div class="list_group">
-                                <div class="group_name fl">{{ cat2.name }} &gt;</div>
-                                <div class="group_detail fl">
-                                    {% for cat3 in cat2.sub_cats %}
-                                    <a href="/list/{{ cat3.id }}/1/">{{ cat3.name }}</a>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-			</div>
-			<ul class="navlist fl">
-				<li><a href="">首页</a></li>
-				<li class="interval">|</li>
-				<li><a href="">真划算</a></li>
-				<li class="interval">|</li>
-				<li><a href="">抽奖</a></li>
+                    <a href="{{ url("contents:index") }}">首页</a>
+                    <span> | </span>
+                </li>
+                <li>
+                    <a href="javascript:void(0)">限时快抢</a>
+                    <span> | </span>
+                </li>
+                <li>
+                    <a href="javascript:void(0)">热搜</a>
+                    <span> | </span>
+                </li>
 			</ul>
 		</div>
+{#        商品分类目录#}
+        <div class="goods_cate" @mouseover="isShowMenu=true" @mouseleave="isShowMenu=false" v-cloak>
+            <ul class="goods_menu_item"  v-show="isShowMenu" >
+                <li v-for="(key,value) in goods">
+                    <div class="level1">
+                        <a  href="javascript:void(0)">[[ key.name ]]</a>
+                        <a v-for="sub in key.subs" :href="sub.url">[[ sub.name ]]</a>
+                    </div>
+                </li>
+        </ul>
+        </div>
+{#        面包屑#}
+        <div class="goods_breadcrumb" v-cloak>
+            <a href="{{ url("contents:index") }}">[[ breadcrums.cat1 ]]</a>
+            <span>></span>
+            <a href="#">[[breadcrums.cat2]]</a>
+            <span>></span>
+            <a href="javascript:void(0);">[[breadcrums.cat3]]</a>
 	</div>
-	<div class="breadcrumb">
-		<a href="javascript:;">{{ breadcrumb.cat1.name }}</a>
-		<span>></span>
-		<a href="javascript:;">{{ breadcrumb.cat2.name }}</a>
-        <span>></span>
-		<a href="javascript:;">{{ breadcrumb.cat3.name }}</a>
-	</div>
-	<div class="main_wrap clearfix">
-		<div class="l_wrap fl clearfix">
-			<div class="new_goods">
-				<h3>热销排行</h3>
-				<ul>
-                    <li v-for="sku in hot_skus">
-                        <a :href="sku.url"><img :src="sku.default_image_url"></a>
-                        <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
-                        <div class="price">￥[[ sku.price ]]</div>
-                    </li>
-                </ul>
-			</div>
-		</div>
-		<div class="r_wrap fr clearfix">
-			<div class="sort_bar">
-                <a href="{{ url('goods:list', args=(category_id, 1)) }}?sort=default" {% if sort=='default' %}class="active"{% endif %}>默认</a>
-                <a href="{{ url('goods:list', args=(category_id, 1)) }}?sort=price" {% if sort=='price' %}class="active"{% endif %}>价格</a>
-                <a href="{{ url('goods:list', args=(category_id, 1)) }}?sort=hot" {% if sort=='hot' %}class="active"{% endif %}>人气</a>
-{#				<a href="/list/115/1/?sort=default" class="active">默认</a>#}
-{#				<a href="/list/115/1/?sort=price">价格</a>#}
-{#				<a href="/list/115/1/?sort=hot">人气</a>#}
-			</div>
-			<ul class="goods_type_list clearfix">
-                {% for sku in page_skus %}
-                    <li>
-                        <a href="{{ url('goods:detail', args=(sku.id, )) }}"><img src="{{ sku.default_image.url }}"></a>
-                        <h4><a href="{{ url('goods:detail', args=(sku.id, )) }}">{{ sku.name }}</a></h4>
-                        <div class="operate">
-                            <span class="price">￥{{ sku.price }}</span>
-                            <span class="unit">台</span>
-                            <a href="#" class="add_goods" title="加入购物车"></a>
-                        </div>
-                    </li>
-                {% endfor %}
-			</ul>
-            {# 前端分页器插件内容 #}
-            <div class="pagenation">
-                <div id="pagination" class="page"></div>
+{#        热销商品#}
+        <div class="hot_goods">
+            <div class="hot_title">
+                <span>热销排行</span>
+                <p></p>
             </div>
-		</div>
-	</div>
-	<div class="footer">
-		<div class="foot_link">
-			<a href="#">关于我们</a>
-			<span>|</span>
-			<a href="#">联系我们</a>
-			<span>|</span>
-			<a href="#">招聘人才</a>
-			<span>|</span>
-			<a href="#">友情链接</a>		
-		</div>
-		<p>CopyRight © 2016 北京美多商业股份有限公司 All Rights Reserved</p>
-		<p>电话：010-****888    京ICP备*******8号</p>
-	</div>
-	</div>
-	<script type="text/javascript">
+            <div class="hot" v-for="hot in hots">
+                <a class="hot_goods_img" :href="hot.url">
+                    <img :src="hot.img">
+                </a>
+                <a class="hot-goods-title" :href="hot.url">
+                    <span class="title">[[hot.title]]</span>
+                    <span class="price">￥[[hot.price]]</span>
+                </a>
+            </div>
+        </div>
+{#        商品显示顺序#}
+        <div class="goods_sort">
+            <div class="goods_sort_item">
+                <div class="navlist1" style="cursor: default">
+                    <a @click="showZhongHe"><span {% if sort == 'default' %}class="active"{% endif %}>综合</span></a>
+                    <span class="interval">|</span>
+                    <a @click="showPrice"><span  {% if sort == 'price' %}class="active"{% endif %}>价格</span></a>
+                    <span class="interval">|</span>
+                    <a @click="showSales"><span {% if sort == 'sales' %}class="active"{% endif %}>销量</span></a>
+                    <span class="interval">|</span>
+                </div>
+                <div class="price_interval">
+                    <div class="price_interval_left">
+                        <span>￥</span>
+                        <input type="text" v-model="lp" name="lp" placeholder="00">
+                    </div>
+                    <span class="heng">-</span>
+                    <div class="price_interval_right">
+                        <span>￥</span>
+                        <input type="text" v-model="rp" name="rp" placeholder="00">
+                    </div>
+                    <div class="ensure" style="cursor:default">
+                        <a @click="submitPrice">确定</a>
+                    </div>
+                    <span class="ip a
+                    interval">|</span>
+                </div>
+            </div>
+        </div>
+{#        商品列表#}
+        <div class="main_wrap clearfix" v-cloak>
+            <div class="goods_spu_list">
+                <div class="goods_spu_item" v-for="spu in spus_dict.goods">
+                    <a :href="spu.url" class="spu_img">
+                        <img :src="spu.image">
+                    </a>
+                    <a :href="spu.url" class="spu_title">
+                        <p class="title">[[ spu.title ]]</p>
+                        <div class="price">
+                            <b>￥[[ spu.now_price ]]</b>
+                            <p>
+                                ￥
+                                <s>[[ spu.price ]]</s>
+                            </p>
+                            <span class="collection">
+                                <img src="{{ static('images/collections.png') }}">
+                                2000
+                            </span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+{#        分页#}
+        <div class="pagenation">
+            <div id="pagination" class="page"></div>
+        </div>
+{#        商品推荐#}
+        <div class="goods_recomment">
+            <ul>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+                <li>推荐商品</li>
+            </ul>
+        </div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
         let category_id = "{{ category_id }}";
+        let sort = "{{ sort }}";
+        let goods = {{ goods | safe }};
+        let spus_dict= {{ spus_dict | safe }};
+        let breadcrums = {{ breadcrums | safe }};
+        let page_num = {{ page_num }};
+        let total_page = {{ total_page }};
+        let p_r = '{{ p_r }}'
     </script>
 	<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 	<script type="text/javascript" src="{{ static('js/list.js') }}"></script>
 	<script type="text/javascript" src="{{ static('js/jquery.pagination.min.js') }}"></script>
+{#    分页js#}
 	<script>
         $(function () {
             $('#pagination').pagination({
-                currentPage: {{ page_num }}, // 当期所在页码
-                totalPage: {{ total_page }},   // 总页数
+                currentPage: page_num, // 当期所在页码
+                totalPage: total_page,   // 总页数
                 callback:function (current) {
-                    {#location.href = '/list/115/1/?sort=default';#}
-                    location.href = '/list/{{ category_id }}/' + current + '/?sort={{ sort }}';
+                    location.href = "/list/11?page=1&amp;sort=default";
+                    location.href = '/goodslist/' + category_id + "?page=" + current + "&amp;" + "sort={{ sort }}" + "&amp;" + "p_r=" + p_r;
                 }
             })
         });
     </script>
-</body>
-</html>
+{% endblock %}

@@ -10,13 +10,16 @@
 </head>
 <body>
 	<div class="login_top clearfix">
-		<a href="index.html" class="login_logo"><img src="{{ static('images/logo02.png') }}"></a>
+        <a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
+        <span>依《网络安全法》相关要求，即日起Time商城会员登陆需绑定手机。为保障您的账户安全及正常使用，如您尚未绑定，请尽快完成绑定，感谢您的理解和支持!</span>
 	</div>
 	<div class="login_form_bg" id="app">
 		<div class="login_form_wrap clearfix">
-			<div class="login_banner fl"></div>
-			<div class="slogan fl">商品美 · 种类多 · 欢迎光临</div>
-			<div class="login_form fr">
+{#			<div class="login_banner fl"></div>#}
+			<div class="slogan fl">
+                <a class="slogan_item"></a>
+            </div>
+			<div class="login_form fl">
 				<div class="login_title clearfix">
 					<a href="javascript:;" class="cur">账户登录</a>
 				</div>

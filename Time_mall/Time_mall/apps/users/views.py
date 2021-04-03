@@ -1,9 +1,9 @@
 import json,re,logging
 
 from django import http
-from django.conf import settings
 from django.views import View
 from django.urls import reverse
+from django.conf import settings
 from django.db import DatabaseError
 from django.shortcuts import render,redirect
 from django_redis import get_redis_connection
@@ -11,8 +11,8 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import login,authenticate,logout
 
-from cart.utils import combine_carts
 from goods.models import Sku
+from cart.utils import combine_carts
 from users.models import User,Address
 from Time_mall.utils import constants,response_code
 from Time_mall.utils.view import MyLoginRequiredMixin
@@ -25,7 +25,7 @@ from users.utils import generate_email_token, get_email_info
 
 #日志器
 logger = logging.getLogger('django')
-#用户名重复校验
+
 class UsernameRepetition(View):
     def get(self,request,username):
         '''
@@ -37,7 +37,6 @@ class UsernameRepetition(View):
         #返回用户名个数
         count = User.objects.filter(username=username).count()
         return http.JsonResponse({"count":count})
-#手机号重复校验
 class PhoneRepetition(View):
     def get(self,request,phone):
         '''
@@ -95,22 +94,9 @@ class RegisterView(View):
         #校验用户协议
         if allow != 'on':
             return http.HttpResponseForbidden("请勾选用户协议!")
-
-        #3、保存至数据库
-        try:
-            User.objects.create_user(
-                username=username,
-                password=password,
-                phone=mobile
-            )
-        #写入失败就抛出异常
-        except DatabaseError:
-            return render(request,'register.html',{"register_error":"注册失败"})
-
         #后端对短信验证码进行验证
         #链接redis数据库
         redis_conn = get_redis_connection('verify_code')
-
         #如果Redis服务端需要同时处理多个请求，加上网络延迟，那么服务端利用率不高，效率降低。
         #获取短信验证码
         redis_sms_code = redis_conn.get('sms_%s'%mobile)
@@ -120,11 +106,18 @@ class RegisterView(View):
         #校验验证码是否正确
         if redis_sms_code.decode() != sms_code:
             return render(request, 'register.html', {"register_error": "短信输入错误"})
-
+            # 3、保存至数据库
+        try:
+            User.objects.create_user(
+                username=username,
+                password=password,
+                phone=mobile
+            )
+        # 写入失败就抛出异常
+        except DatabaseError:
+            return render(request, 'register.html', {"register_error": "注册失败"})
         #4、重定向页面
         return redirect(reverse('contents:index'))#reverse反向解析
-        # return http.HttpResponse('注册成功，重定向到首页')
-#用户登录
 class LoginView(View):
     def get(self,request):
         '''
@@ -176,9 +169,7 @@ class LoginView(View):
         response.set_cookie("username", user.username, max_age=constants.COOKIE_VALUE_EXPIERS)
         #购物车整合
         response = combine_carts(request,user,response)
-
         return response
-#退出登录
 class LogoutView(LoginRequiredMixin,View):
     def get(self,request):
         '''
@@ -189,7 +180,6 @@ class LogoutView(LoginRequiredMixin,View):
         #清理session
         logout(request)
         #重定向至首页
-
         next = request.GET.get("next")
         #next存在重定向到指定页面
         if next:
@@ -200,7 +190,6 @@ class LogoutView(LoginRequiredMixin,View):
         response.delete_cookie("username")
         #返回
         return response
-#用户信息
 class UserInfoView(LoginRequiredMixin,View):
     def get(self,request):
         '''
@@ -280,7 +269,6 @@ class EmailVerifyView(View):
             return http.HttpResponseServerError("存储失败")
         #重定向userinfo
         return redirect(reverse('users:userinfo'))
-#收货地址
 class AddressView(LoginRequiredMixin,View):
     def get(self,request):
         '''
@@ -318,7 +306,6 @@ class AddressView(LoginRequiredMixin,View):
         }
         #响应页面
         return render(request,'user_address.html',context)
-#新增收获地址
 class NewAddAddressView(View):
     def post(self,request):
         '''
@@ -388,7 +375,6 @@ class NewAddAddressView(View):
         }
         #响应数据
         return http.JsonResponse({'code':response_code.RETCODE.OK,'errmsg':'添加成功','address_dict':address})
-#修改地址
 class UpdateAddressView(View):
     def put(self,request,iid):
         '''
@@ -417,7 +403,6 @@ class UpdateAddressView(View):
         if tel:
             if not re.match('^\d{7}$', tel):
                 return http.HttpResponseForbidden("固定电话格式有误")
-
         # 校验邮箱
         if email:
             if not re.match('^[0-9a-zA-Z]{1,16}@(qq||yeah||126||163)\.(net||cn||com)$', email):
@@ -427,7 +412,6 @@ class UpdateAddressView(View):
             Address.objects.filter(id=iid).update(
                 user=request.user,  # 当前用户
                 receiver=receiver,
-                # title=receiver,
                 province_id=province_id,
                 city_id=city_id,
                 district_id=district_id,
@@ -439,7 +423,6 @@ class UpdateAddressView(View):
         except Exception as e:
             logger.error(e)
             return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '修改错误'})
-
         # 地址详细信息
         address_obj = Address.objects.get(id=iid)
         address = {
@@ -455,7 +438,6 @@ class UpdateAddressView(View):
         }
         # 响应数据
         return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': '添加成功', 'address_dict': address})
-#修改地址标题
 class UpdateTitleView(View):
     def put(self,request,iid):
         '''
@@ -477,7 +459,6 @@ class UpdateTitleView(View):
             return http.JsonResponse({'code':response_code.RETCODE.DBERR,'errmsg':'保存失败'})
         #响应数据
         return http.JsonResponse({'code':response_code.RETCODE.OK,'errmsg':'ok'})
-#删除地址
 class DelAddressView(View):
     def delete(self,request,iid):
         '''
@@ -498,7 +479,6 @@ class DelAddressView(View):
             return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '删除失败'})
         #响应正确状态码
         return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': 'ok'})
-#设置默认地址
 class SetDefaultAddressView(View):
     def put(self,request,iid):
         '''
@@ -515,7 +495,6 @@ class SetDefaultAddressView(View):
             return http.JsonResponse({'code': response_code.RETCODE.DBERR, 'errmsg': '更改失败'})
         # 响应正确状态码
         return http.JsonResponse({'code': response_code.RETCODE.OK, 'errmsg': 'ok'})
-#修改密码
 class UpdatePasswordView(View):
     def get(self,request):
         '''
@@ -524,10 +503,13 @@ class UpdatePasswordView(View):
         :return:
         '''
         return render(request,'update_password.html')
-
-#用户浏览记录
 class UserHistoryView(LoginRequiredMixin,View):
     def get(self,request):
+        '''
+        #用户浏览记录
+        :param request:
+        :return: 历史记录
+        '''
         redis_conn = get_redis_connection('history')
         skus_id = redis_conn.lrange('history_%s'%request.user.id,0,-1)
         histories = list()
@@ -542,5 +524,4 @@ class UserHistoryView(LoginRequiredMixin,View):
                     'spu_id':sku_obj.spu_id
                 }
                 histories.append(history)
-        print(histories)
         return http.JsonResponse({'code':'ok',"histories":histories})

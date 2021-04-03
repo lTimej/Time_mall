@@ -1,5 +1,5 @@
 from django.db import models
-from Time_mall.utils.baseModel import BaseModel
+from baseModel import BaseModel
 # Create your models here.
 
 #商品类别id

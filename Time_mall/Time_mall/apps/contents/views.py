@@ -2,6 +2,7 @@ from django.views import View
 from django.shortcuts import render
 
 from contents.utils import get_category, get_data, get_contents
+from contents.pageStatic import get_static_page
 from goods.models import GoodsCategory,ProductId
 from contents.models import Content,ContentCategory,AdCategory
 
@@ -15,6 +16,7 @@ class IndexView(View):
         :return:
         '''
         #获取商品分类
+        # get_static_page()
         goods = get_category()
         obj = ContentCategory.objects.all()
         contents = {}

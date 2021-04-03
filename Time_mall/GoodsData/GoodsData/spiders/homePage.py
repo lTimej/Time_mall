@@ -14,7 +14,7 @@ class HomepageSpider(scrapy.Spider):
         'https://mce.mogucdn.com/jsonp/multiget/3?pids=109499%2C109520%2C109731%2C109753%2C110549%2C109779%2C110547%2C109757%2C109793%2C109795%2C110563%2C110546%2C110544']
 
     def start_requests(self):  # 重构start_requests方法
-        cookies_str = '__mgjuuid=8b5db0da-667c-4421-95a1-d8d83b1f36d9; _ga=GA1.2.970001936.1612227271; smidV2=20210202094430031611518b87722548ae4b71ccfe721b003914682dd14eb00; _mwp_h5_token=bf747c3612ddcf60aea979211255b865_1614045286222; _mwp_h5_token_enc=218cac90b71883aaae8cb999f1d3ccf3; _gid=GA1.2.521304411.1614045297; FRMS_FINGERPRINTN=4693DuYZQImnPvECl7RiOg; __mogujie=QkbiDjNf%2BzhpBSdjfEKbzGJwYL4OJiGOM9BN3gijn3i%2F3xhZ6vShATXxNRYy2VOe2Cbre8NxzcUMjv5kpDQrDw%3D%3D; __ud_=1fgw9dy; __must_from=70000000_; _gat=1'
+        cookies_str = '__mgjuuid=8b5db0da-667c-4421-95a1-d8d83b1f36d9; _ga=GA1.2.970001936.1612227271; smidV2=20210202094430031611518b87722548ae4b71ccfe721b003914682dd14eb00; _mwp_h5_token=a000922c451c16333e8faffd38de447a_1615604325175; _mwp_h5_token_enc=27034531b700c5559e0fb675c4d83fb3; _gid=GA1.2.1829590315.1615604326; mf_cache=Hg_szVQ4QlmEIYLfSiU5MQ; FRMS_FINGERPRINTN=Hg_szVQ4QlmEIYLfSiU5MQ; __mogujie=SgUuMwdoejrXW2Cd4EcQ0Fh6XOLx7eX6gxpJ8EHeyLuV7jKOGyUYcRDVQkQyZGuWF4Rjet2HXr9Bx%2FTKFUfAdw%3D%3D; __ud_=1fgw9dy; __mgjref=http%3A%2F%2Fwww.mogujie.com%2F; __must_from=70000000_; _gat=1'
         self.cookies_dict = {i.split('=')[0]: i.split('=')[1] for i in cookies_str.split('; ')}
         headers = {
             'referer': 'https://market.mogu.com/'
@@ -108,7 +108,8 @@ class HomepageSpider(scrapy.Spider):
         spu_specs = {}
         spu_specs_list = []
         # 颜色、尺码
-        spu_id = None
+        # spu_id = None
+        # category2_id = 0
         if skuInfo.get('props'):
             for prop in skuInfo.get('props'):
                 spu_spec_name = prop.get('label')
@@ -125,6 +126,7 @@ class HomepageSpider(scrapy.Spider):
             desc_image = FastFdfs().upload(i)
             # ---------------------------------DetailImag表
             DetailImag().insert(desc, desc_image, spu_id)
+            pass
         for sku in skuInfo.get('skus'):
             price = float(sku.get('price') / 100)
             nowprice = float(sku.get('nowprice') / 100)
@@ -144,14 +146,22 @@ class HomepageSpider(scrapy.Spider):
                         if msg[0]:
                             spec_id = msg[0]
                             # --------------SpecsOption表
-                            SpecsOption().insert(spu_specs[spu_specs_list[0]],
-                                                 spec_id)
+                            SpecsOption().insert(spu_specs[spu_specs_list[0]],spec_id)
                             # ---------------------------------SpecsOption查询
                             m = SpecsOption().select(spu_specs[spu_specs_list[0]],
                                                      spec_id)
                             if m:
                                 if m[0]:
                                     option_id = m[0]
+                                    default_image_url = FastFdfs().upload(default_image)
+                                    # -------------------sku表
+                                    sku_id = Sku().insert(sku_title, price, nowprice, stock, category2_id, spu_id,
+                                                          default_image_url)
+                                    # ---------------------------------SkuSpecification表
+                                    SkuSpecification().insert(option_id, sku_id, spec_id)
+                                    img_url = FastFdfs().upload(img)
+                                    # ---------------------------------SkuImag表
+                                    SkuImag().insert(img_url, sku_id)
                 else:
                     if style:
                         spu_specs[spu_specs_list[0]] = style
@@ -168,6 +178,15 @@ class HomepageSpider(scrapy.Spider):
                                 if m:
                                     if m[0]:
                                         option_id = m[0]
+                                        default_image_url = FastFdfs().upload(default_image)
+                                        # -------------------sku表
+                                        sku_id = Sku().insert(sku_title, price, nowprice, stock, category2_id, spu_id,
+                                                              default_image_url)
+                                        # ---------------------------------SkuSpecification表
+                                        SkuSpecification().insert(option_id, sku_id, spec_id)
+                                        img_url = FastFdfs().upload(img)
+                                        # ---------------------------------SkuImag表
+                                        SkuImag().insert(img_url, sku_id)
                     if size:
                         spu_specs[spu_specs_list[1]] = size
                         # ----------------spuspecs查询
@@ -183,12 +202,14 @@ class HomepageSpider(scrapy.Spider):
                                 if m:
                                     if m[0]:
                                         option_id = m[0]
-            default_image_url = FastFdfs().upload(default_image)
-            # -------------------sku表
-            sku_id = Sku().insert(sku_title, price, nowprice, stock, default_image_url, category2_id,
-                                  spu_id)
-            # ---------------------------------SkuSpecification表
-            SkuSpecification().insert(option_id, sku_id, spec_id)
-            img_url = FastFdfs().upload(img)
-            # ---------------------------------SkuImag表
-            SkuImag().insert(img_url, sku_id)
+                                        default_image_url = FastFdfs().upload(default_image)
+                                        # -------------------sku表
+                                        sku_id = Sku().insert(sku_title, price, nowprice, stock, category2_id, spu_id,
+                                                              default_image_url)
+                                        # ---------------------------------SkuSpecification表
+                                        SkuSpecification().insert(option_id, sku_id, spec_id)
+                                        img_url = FastFdfs().upload(img)
+                                        # ---------------------------------SkuImag表
+                                        SkuImag().insert(img_url, sku_id)
+
+

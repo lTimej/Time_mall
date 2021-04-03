@@ -1,10 +1,125 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "layout.html" %}
+{% block title %}
+    <title>Time商城-订单详情</title>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{{ static('css/order_detail.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="body_wrap">
+        <div class="order_detail">
+            <div class="order_detail_item">
+                <h2>订单详情</h2>
+                <div class="order_title">
+                    <span class="sw">订单编号：[[order.order_id]]</span>
+                    <span class="sw">
+                        当前状态:
+                        <span class="cancel">
+                            [[order.order_status]]
+                        </span>
+                    </span>
+                </div>
+                <div class="order_process">
+                    <div class="order_process_item">
+                        <div class="process"></div>
+                        <i class="i order_bar1">
+                            1
+                            <span class="title">提交订单</span>
+                            <span class="create_time">[[order.order_time]]</span>
+                        </i>
+                        <i class="i order_bar2">2<span class="title">买家支付单</span></i>
+                        <i class="i order_bar3">3<span class="title">卖家发货</span></i>
+                        <i class="i order_bar4">4<span class="title">确认收获</span></i>
+                        <i class="i order_bar5">5<span class="title">评价</span></i>
+                    </div>
+                </div>
+                <div class="address_info">
+                    <h5 class="title">详细信息</h5>
+                    <dl class="address_info_item">
+                        <dt>收 货 人：</dt>
+                        <dd>[[address.receiver]]</dd>
+                        <dt>收获地址：</dt>
+                        <dd>[[address.addr]]</dd>
+                        <dt>收货邮箱：</dt>
+                        <dd>[[address.email]]</dd>
+                        <dt>联系电话：</dt>
+                        <dd>[[address.phone]]</dd>
+                    </dl>
+                </div>
+                <div class="order_list md ">
+                    <h5 class="title">商品清单</h5>
+                    <ul class="order_list_item">
+                        <li class="mo">
+                            <ul class="list_title clearfix">
+                                <li class="td_goods">商品</li>
+                                <li class="td_price">单价(元)</li>
+                                <li class="td_num">数量</li>
+                                <li class="td_status">交易状态</li>
+                                <li class="td_dyh">店铺优惠</li>
+                                <li class="td_hyh">活动优惠</li>
+                                <li class="td_total_price">订单金额(元)</li>
+                            </ul>
+                            <ul class="list clearfix" v-for="s in sku">
+                                <li class="info">
+                                    <ul>
+                                        <li class="goods">
+                                            <div class="td_wrap">
+                                                <a :href="'/detail/'+s.spu_id" target="_blank"><img :src="s.sku_img"></a>
+                                                <div>
+                                                    <a :href="'/detail/'+s.spu_id" target="_blank">[[s.sku_title]]</a>
+                                                </div>
+                                                <p v-for="spec in s.sku_spec">[[spec]]</p>
+                                            </div>
+                                        </li>
+                                        <li class="price">
+                                            <div>
+                                                <p class="p">￥[[s.sku_price]]</p>
+                                                <p class="n">￥[[s.sku_now_price]]</p>
+                                            </div>
+                                        </li>
+                                        <li class="num">
+                                            <div>
+                                                <p class="num">[[s.sku_count]]</p>
+                                                <p class="lw"></p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li class="status">
+                                    <div>
+                                        <span v-show="s.sku_status">[[s.sku_status]]</span>
+                                    </div>
+                                </li>
+                                <li class="yh">
+                                    <div v-show="s.yh">
+                                        <p>[[s.yh]]</p>
+                                    </div>
+                                </li>
+                                <li class="hyh">
+                                    <div></div>
+                                </li>
+                                <li class="price">
+                                    <div>
+                                        <span v-show="s.total_price">￥[[s.total_price]]</span>
+                                    </div>
+                                </li>
+                            </ul>
+
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        let order = {{ order | safe }};
+        let address = {{ address | safe }};
+        let sku = {{ sku | safe }};
+    </script>
+    <script type="text/javascript" src="{{ static("js/order_detail.js") }}"></script>
+{% endblock %}

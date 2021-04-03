@@ -2,17 +2,19 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-	<title>美多商城-用户中心</title>
+	<title>Time商城-我的订单</title>
 	<link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
 	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ static("css/order.css") }}">
     <script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/jquery-1.12.4.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
 </head>
 <body>
 	<div id="app">
-	<div class="header_con">
+	    <div class="header_con">
 		<div class="header" v-cloak>
-            <div class="welcome fl">欢迎来到美多商城!</div>
+            <div class="welcome fl">欢迎来到Time商城!</div>
             <div class="fr">
                 <div v-if="username" class="login_btn fl">
                     欢迎您：<em>[[ username ]]</em>
@@ -54,53 +56,88 @@
 		<div class="left_menu_con clearfix">
 			<h3>用户中心</h3>
 			<ul>
-				<li><a href="{{ url('users:userinfo') }}" class="active">· 个人信息</a></li>
+				<li><a href="{{ url('users:userinfo') }}" >· 个人信息</a></li>
 				<li><a href="{{ url('users:address') }}">· 收货地址</a></li>
-                <li><a href="">· 全部订单</a></li>
+                <li><a href="{{ url("orders:userorder",args=(1,)) }}" class="active">· 全部订单</a></li>
 				<li><a href="{{ url('users:upass') }}">· 修改密码</a></li>
 			</ul>
 		</div>
-		<div class="right_content clearfix" v-cloak>
-            <div class="info_con clearfix">
-                <h3 class="common_title2">基本信息</h3>
-                <ul class="user_info_list">
-                    <li><span>用户名：</span>[[ username ]]</li>
-                    <li><span>联系方式：</span>[[mobile ]]</li>
-                    <li>
-                        <span>Email：</span>
-                        <div v-if="set_email">
-                            <input v-model="email" @blur="check_email" type="email" name="email" class="email">
-                            <input @click="save_email" type="button" name="" value="保 存">
-                            <input @click="cancel_email" type="reset" name="" value="取 消">
-                            <div v-show="error_email" class="error_email_tip">邮箱格式错误</div>
-                        </div>
-                        <div v-else>
-                            <input v-model="email" type="email" name="email" class="email" readonly>
-                            <div v-if="email_active">
-                                已验证
-                            </div>
-                            <div v-else>
-                                待验证<input @click="save_email" :disabled="send_email_btn_disabled" type="button" :value="send_email_tip">
-                            </div>
-                        </div>
-                    </li>
+        <div class="user_order">
+            <div class="order_search">
+                <div class="search_wrap fl">
+                    <form method="get" action="/search/" class="search_con">
+                        <input type="text" class="input_text fl" name="q" placeholder="请输入订单中的商品名称或订单号">
+                        <input type="submit" class="input_btn fr" name="" value="搜索">
+                    </form>
+                </div>
+            </div>
+            <div class="user_order_title">
+                <ul>
+                    <li class="order_goods">商品</li>
+                    <li class="order_price">单价(元)</li>
+                    <li class="order_num">数量</li>
+                    <li class="order_serve">售后</li>
+                    <li class="order_pay">实付款(元)</li>
+                    <li class="order_status">交易状态</li>
+                    <li class="order_operate">操作</li>
                 </ul>
             </div>
-            <h3 class="common_title2">最近浏览</h3>
-            <div class="has_view_list" v-cloak>
-                <ul class="goods_type_list clearfix">
-                    <li v-for="sku in histories">
-                        <a :href="sku.url"><img :src="sku.default_image_url"></a>
-                        <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
-                        <div class="operate">
-                            <span class="price">￥[[ sku.price ]]</span>
-                            <span class="unit">台</span>
-                            <a href="javascript:;" class="add_goods" title="加入购物车"></a>
-                        </div>
-                    </li>
-                </ul>
+            <div class="orders">
+                <div class="orders_item" v-for="order in orders.goods">
+                    <table class="order_table">
+                        <tbody>
+                            <tr class="order_table_title">
+                                <td class="th" colspan="7">
+                                    <div class="order_left fl">
+                                        <span class="order_id">订单编号：<span>[[order.orderId]]</span></span>
+                                        <span class="order_time">成交时间：[[order.createTime]]</span>
+                                    </div>
+                                    <a class="order_right fr">
+                                        <span>联系商家</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr class="order_table_info" v-for="(ord,index) in order.orders">
+                                <td class="order_goods">
+                                    <a :href="'/detail/' + ord.spu_id" class="order_img"><img :src="ord.image"></a>
+                                    <div class="order_desc" style="cursor: pointer">
+                                        <p>
+                                            <a :href="'/detail/' + ord.spu_id">[[ord.title]]</a>
+                                        </p>
+                                        <p v-for="spec in ord.specs">[[spec]]</p>
+                                    </div>
+                                </td>
+                                <td class="order_price">
+                                    <s class="old_price">￥[[ord.price]]</s>
+                                    <p>￥[[ord.now_price]]</p>
+                                </td>
+                                <td class="order_num">[[ord.count]]</td>
+                                <td class="order_serve"></td>
+                                <td class="order_pay">
+                                    <p class="total_price" v-show="ord.total_price">￥[[ord.total_price]]</p>
+                                    <p v-if="ord.freight=='0.00'">(全国包邮)</p>
+                                    <p v-else>[[ord.freight]]</p>
+                                    <p v-show="ord.total_price">默认快递</p>
+                                </td>
+                                <td class="order_status">
+                                    <p v-show="ord.status">[[ord.status]]</p>
+                                    <a  v-show="ord.status" :href="'/order/detail/'+order.orderId">清单详情</a>
+                                </td>
+                                <td class="order_other">
+                                    <ul>
+                                        <li ><a :href="'/del/order/'+order.orderId" v-show="ord.status" >删除订单</a></li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {#        分页#}
+                <div class="pagenation">
+                    <div id="pagination" class="page"></div>
+                </div>
             </div>
-		</div>
+        </div>
 	</div>
 	<div class="footer">
 		<div class="foot_link">
@@ -118,12 +155,25 @@
 	</div>
     <script type="text/javascript">
         //传到vue中
-        let username = '{{ username }}'
-        let mobile = '{{ phone }}'
-        let email = '{{ email }}'
-        let email_active = '{{ email_active }}'
+        let page_num = {{ page_num }};
+        let total_page = {{ total_page }};
+        let orders = {{ orders | safe }};
     </script>
     <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/user_info.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/user_order.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/jquery.pagination.min.js') }}"></script>
+{#    分页js#}
+	<script>
+        $(function () {
+            $('#pagination').pagination({
+                currentPage: page_num, // 当期所在页码
+                totalPage: total_page,   // 总页数
+                callback:function (current) {
+                    location.href = "/user/order/1/";
+                    location.href = '/user/order/' + current + '/';
+                }
+            })
+        });
+    </script>
 </body>
 </html>

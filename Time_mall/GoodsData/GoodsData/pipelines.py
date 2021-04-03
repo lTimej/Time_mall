@@ -214,12 +214,14 @@ class Sku:
         self.conn = pymysql.connect(host='127.0.0.1',port=3306, user='Time',password='liujun',db='Time_mall',charset='utf8')
         self.cur = self.conn.cursor()
 
-    def insert(self, name, price,now_price,stock,default_image,category_id,spu_id):
+    def insert(self, name, price,now_price,stock,category_id,spu_id,default_image=None):
         print('tb_sku',name,price,now_price,default_image,category_id,spu_id)
         create_time = datetime.datetime.today()
         update_time = datetime.datetime.today()
         global count
         count +=1
+        # if not default_image:
+        #     return count
         sql = "insert into tb_sku(title,price,now_price,stock,default_image,category_id,spu_id,sales,comments,is_launched,create_time,update_time) values('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}');".format(name,price,now_price,stock,default_image,category_id,spu_id,0,0,1,create_time,update_time)
         try:
             self.cur.execute(sql)

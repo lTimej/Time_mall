@@ -3,11 +3,11 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 	<title>Time商城-首页</title>
-    <link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
-	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
-    <script type="text/javascript" src="{{ static('js/jquery-1.12.4.min.js') }}"></script>
-	<script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/reset.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/main.css">
+    <script type="text/javascript" src="/static/js/jquery-1.12.4.min.js"></script>
+	<script type="text/javascript" src="/static/js/vue-2.5.16.js"></script>
+    <script type="text/javascript" src="/static/js/axios-0.18.0.min.js"></script>
 </head>
 <body>
 	<div id="app">
@@ -22,26 +22,26 @@
 				<div class="login_btn fl" v-if="username" >
                     <a href="javascript:;">[[username]]</a>
                     <span>|</span>
-					<a href="{{ url('users:logout') }}">退出</a>
+					<a href="/logout/">退出</a>
 				</div>
                 <div class="login_btn fl" v-else>
-                    <a href="{{ url("users:login") }}">登录</a>
+                    <a href="/login/">登录</a>
                     <span>|</span>
-					<a href='{{ url("users:register") }}'>注册</a>
+					<a href='/register/'>注册</a>
 				</div>
 				<div class="user_link fl">
 					<span>|</span>
-					<a href="{{ url('users:userinfo') }}">用户中心</a>
+					<a href="/userinfo/">用户中心</a>
 					<span>|</span>
-					<a href="{{ url("cart:cartlist") }}">我的购物车</a>
+					<a href="/cartlist/">我的购物车</a>
 					<span>|</span>
-					<a href="{{ url("orders:userorder",args=(1,)) }}">我的订单</a>
+					<a href="/user/order/1/">我的订单</a>
 				</div>
 			</div>
 		</div>
 	</div>
 	<div class="search_bar clearfix">
-		<a href="javascript:void(0)" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
+		<a href="javascript:void(0)" class="logo fl"><img src="/static/images/logo.png"></a>
 		<div class="search_wrap fl">
 			<form method="get" action="#" class="search_con">
                 <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
@@ -55,7 +55,7 @@
 			</ul>
 		</div>
 		<div class="guest_cart fr" v-cloak>
-			<a href="{{ url("cart:cartlist") }}" class="cart_name fl">我的购物车</a>
+			<a href="/cartlist/" class="cart_name fl">我的购物车</a>
 			<div class="goods_count fl" id="show_count">[[cartLen]]</div>
 			<ul class="cart_goods_show">
 				<li v-for="cart in cartss">
@@ -122,9 +122,9 @@
 			</div>
 		</div>
 	</div>
-{#        商品楼层分类#}
+
     <div class="floor_adv" v-cloak>
-{#        今日必抢#}
+
         <div class="list_model">
             <div class="goods_con">
                 <div class="goods_banner fl">
@@ -147,7 +147,7 @@
                 <ul class="point point_today"></ul>
             </div>
         </div>
-{#        女装#}
+
         <div class="list_model model02">
             <div class="list_title clearfix">
                 <h3 class="fl" id="model01">
@@ -160,13 +160,13 @@
                     <a>卫衣</a>|
                     <a>牛仔裤</a>|
                     <a>休闲库</a>
-{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
-{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+
+
                 </div>
             </div>
             <div class="goods_con">
                 <div class="goods_banner2 fl">
-                    <a href="{{ url('contents:expect') }}" ><img src="../static/images/banner02.png"></a>
+                    <a href="/expect" ><img src="../static/images/banner02.png"></a>
                 </div>
                 <div class="nvzhuang goods_list_con pos_center_con" v-for="cts in contents.woman_cloth">
                     <div class="goods_list_a" v-for="content in cts">
@@ -176,7 +176,7 @@
                         <a class="today_grab_title">[[content.title]]</a>
                         <div class="today_grab_info">
                             <span class="t1">￥ [[content.price]]</span>
-    {#                        <s class="t2">￥ [[content.discountprice]]</s>#}
+    
                         </div>
                     </div>
                  </div>
@@ -185,7 +185,7 @@
                 <ul class="point point_nvzhuang"></ul>
             </div>
         </div>
-{#        女鞋&包包#}
+
         <div class="list_model model03">
             <div class="list_title clearfix">
                 <h3 class="fl" id="model01">
@@ -200,8 +200,8 @@
                     <a>双肩包</a>|
                     <a>手提包</a>|
                     <a>拉杆箱</a>
-{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
-{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+
+
                 </div>
             </div>
             <div class="goods_con clearfix">
@@ -239,7 +239,7 @@
                 </div>
             </div>
         </div>
-{#        男装&男鞋#}
+
         <div class="list_model model03">
             <div class="list_title clearfix">
                 <h3 class="fl" id="model01">
@@ -250,8 +250,8 @@
                     <a>潮男T恤</a>|
                     <a>百搭休闲库</a>|
                     <a>潮鞋</a>
-{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
-{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+
+
                 </div>
             </div>
             <div class="goods_con clearfix">
@@ -289,7 +289,7 @@
                 </div>
             </div>
         </div>
-{#        内衣#}
+
         <div class="list_model model03">
             <div class="list_title clearfix">
                 <h3 class="fl" id="model01">
@@ -299,8 +299,8 @@
                     <a>睡衣</a>|
                     <a>丝袜打底 </a>|
                     <a>内衣套装 </a>
-{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
-{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+
+
                 </div>
             </div>
             <div class="goods_con clearfix">
@@ -338,7 +338,7 @@
                 </div>
             </div>
         </div>
-{#        家纺&家饰#}
+
         <div class="list_model model03">
             <div class="list_title clearfix">
                 <h3 class="fl" id="model01">
@@ -349,8 +349,8 @@
                     <a>手机壳</a>|
                     <a>美发神器</a>|
                     <a>充电宝</a>
-{#                    <a @mouseenter="f2_tab=1" :class="f2_tab===1?'active':''">加价换购</a>#}
-{#                    <a @mouseenter="f2_tab=2" :class="f2_tab===2?'active':''">畅享低价</a>#}
+
+
                 </div>
             </div>
             <div class="goods_con clearfix">
@@ -388,7 +388,7 @@
                 </div>
             </div>
         </div>
-{#        母婴&童装#}
+
         <div class="list_model model03">
             <div class="list_title clearfix">
                 <h3 class="fl" id="model01">
@@ -437,7 +437,7 @@
             </div>
         </div>
     </div>
-{#        猜你喜欢#}
+
     <div class="list_model model03">
         <div class="list_title clearfix">
                 <h3 class="fl" id="model01">
@@ -485,22 +485,22 @@
 	</div>
     <script type="text/javascript">
         //传到vue中
-        let goods = {{ goods | safe }};
-        let contents = {{ contents | safe }};
+        let goods = {{ goods }};
+        let contents = None;
     </script>
-    <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/index.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/lbt.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/nvzhuang.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/nvxie.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/nanxie.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/neiyi.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/jiaju.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/mvying.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/nvxie_recomm.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/nanxie_recomm.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/neiyi_recomm.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/jiaju_recomm.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/mvying_recomm.js') }}"></script>
+    <script type="text/javascript" src="/static/js/common.js"></script>
+    <script type="text/javascript" src="/static/js/index.js"></script>
+    <script type="text/javascript" src="/static/js/lbt.js"></script>
+    <script type="text/javascript" src="/static/js/nvzhuang.js"></script>
+    <script type="text/javascript" src="/static/js/nvxie.js"></script>
+    <script type="text/javascript" src="/static/js/nanxie.js"></script>
+    <script type="text/javascript" src="/static/js/neiyi.js"></script>
+    <script type="text/javascript" src="/static/js/jiaju.js"></script>
+    <script type="text/javascript" src="/static/js/mvying.js"></script>
+    <script type="text/javascript" src="/static/js/nvxie_recomm.js"></script>
+    <script type="text/javascript" src="/static/js/nanxie_recomm.js"></script>
+    <script type="text/javascript" src="/static/js/neiyi_recomm.js"></script>
+    <script type="text/javascript" src="/static/js/jiaju_recomm.js"></script>
+    <script type="text/javascript" src="/static/js/mvying_recomm.js"></script>
 </body>
 </html>

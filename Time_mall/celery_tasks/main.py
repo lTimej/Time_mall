@@ -9,5 +9,5 @@ app = Celery('Time')
 #加载配置环境
 app.config_from_object('django.conf:settings', namespace='CELERY')
 # 加载任务
-app.autodiscover_tasks(['celery_tasks.sms_code'])
+app.autodiscover_tasks(['celery_tasks.sms_code','celery_tasks.send_verify_email'])
 

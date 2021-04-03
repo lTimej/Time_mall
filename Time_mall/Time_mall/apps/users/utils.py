@@ -25,8 +25,6 @@ def get_user(user):
         return None
 
     return user
-
-
 class MyAuthenticate(ModelBackend):
     """
     Authenticates against settings.AUTH_USER_MODEL.

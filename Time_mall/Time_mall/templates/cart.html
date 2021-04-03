@@ -6,6 +6,7 @@
 	<link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
 	<link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
 	<script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
+    <script type="text/javascript" src="{{ static('js/jquery-1.12.4.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
 </head>
 <body>
@@ -17,20 +18,20 @@
                 <div v-if="username" class="login_btn fl">
                     欢迎您：<em>[[ username ]]</em>
                     <span>|</span>
-                    <a href="{{ url('users:logout') }}">退出</a>
+                    <a href="{{ url('users:logout') }}?next=/cartlist/">退出</a>
                 </div>
                 <div v-else class="login_btn fl">
-                    <a href="{{ url('users:login') }}">登录</a>
+                    <a href="{{ url('users:login') }}?next=/cartlist/">登录</a>
                     <span>|</span>
                     <a href="{{ url('users:register') }}">注册</a>
                 </div>
 				<div class="user_link fl">
 					<span>|</span>
-					<a href="{{ url('users:info') }}">用户中心</a>
+					<a href="{{ url('users:userinfo') }}">用户中心</a>
 					<span>|</span>
-					<a href="{{ url('carts:info') }}">我的购物车</a>
+					<a href="#">我的购物车</a>
 					<span>|</span>
-					<a href="user_center_order.html">我的订单</a>
+					<a href="{{ url("orders:userorder",args=(1,)) }}">我的订单</a>
 				</div>
 			</div>
 		</div>		
@@ -50,35 +51,107 @@
 			</ul>
 		</div>
 	</div>
-	<div class="total_count">全部商品<em>[[ total_count ]]</em>件</div>
-    <ul class="cart_list_th clearfix">
-        <li class="col01">商品名称</li>
-        <li class="col03">商品价格</li>
-        <li class="col04">数量</li>
-        <li class="col05">小计</li>
-        <li class="col06">操作</li>
-    </ul>
-    <ul class="cart_list_td clearfix" v-for="(cart_sku,index) in carts" v-cloak>
-        <li class="col01"><input type="checkbox" name="" v-model="cart_sku.selected" @change="update_selected(index)"></li>
-        <li class="col02"><img :src="cart_sku.default_image_url"></li>
-        <li class="col03">[[ cart_sku.name ]]</li>
-        <li class="col05">[[ cart_sku.price ]]元</li>
-        <li class="col06">
-            <div class="num_add">
-                <a @click="on_minus(index)" class="minus fl">-</a>
-                <input v-model="cart_sku.count" @blur="on_input(index)" type="text" class="num_show fl">
-                <a @click="on_add(index)" class="add fl">+</a>
+    <div class="buy_process">
+        <div class="buy_process_wrap">
+            <div class="buy_process_item">
+                <div class="process_bar_gray">
+                    <div class="process_bar p1"></div>
+                    <i class="process_point1">
+                        1
+                        <span class="process c">购物车</span>
+                    </i>
+                    <i class="process_point2">
+                        2
+                        <span class="process">确定订单</span>
+                    </i>
+                    <i class="process_point3">
+                        3
+                        <span class="process">支付</span>
+                    </i>
+                    <i class="process_point4">
+                        4
+                        <span class="process">完成</span>
+                    </i>
+                </div>
             </div>
-        </li>
-        <li class="col07">[[ cart_sku.amount ]]元</li>
-        <li class="col08"><a @click="on_delete(index)">删除</a></li>
-    </ul>
-    <ul class="settlements" v-cloak>
-        <li class="col01"><input type="checkbox" name="" @change="on_selected_all" v-model="selected_all"></li>
-        <li class="col02">全选</li>
-        <li class="col03">合计(不含运费)：<span>¥</span><em>[[ total_selected_amount ]]</em><br>共计<b>[[ total_selected_count ]]</b>件商品</li>
-        <li class="col04"><a href="{{ url('orders:settlement') }}">去结算</a></li>
-    </ul>
+        </div>
+    </div>
+	<div class="cart_info">
+        <div class="total_count">
+            全部商品<em>[[cartLen]]</em>件
+        </div>
+        <ul class="cart_list_th clearfix">
+            <li class="col"><input type="checkbox" v-model="allSelected" @click="Aselected"> 全选</li>
+            <li class="col01">商品名称</li>
+            <li class="col02">商品规格</li>
+            <li class="col03">价格(元）</li>
+            <li class="col04">数量</li>
+            <li class="col05">小计(元)</li>
+            <li class="col06">操作</li>
+        </ul>
+        <div class="carts" v-cloak>
+            <div class="carts_item" v-for="(cart,index) in carts">
+                <ul>
+                    <li class="tick">
+                        <input type="checkbox" v-model="cart.selected" @change="changeSelected(index)">
+                    </li>
+    {#                标题#}
+                    <li class="cart_title">
+                        <a class="title_img" :href="'/detail/'+cart.spu_id"><img :src="cart.img"></a>
+                        <a class="title" :href="'/detail/'+cart.spu_id"><span>[[cart.title]]</span></a>
+                    </li>
+    {#                规格#}
+                    <li class="spec">
+                        <p v-for="specs in cart.sku_specs">[[specs]]</p>
+{#                        <p>尺码：M（56-58cm）</p>#}
+                    </li>
+    {#                价格#}
+                    <li class="price">
+                        <p>￥<s>[[cart.price]]</s></p>
+                        <p>￥<span> [[cart.now_price]] </span></p>
+                    </li>
+    {#                数量#}
+                    <li class="num">
+                        <div class="num_item">
+                            <div class="num_wrap">
+                                <input type="text" v-model="cart.count" @blur="cNum(index)">
+                                <span class="add_num" @click="addNum(index)"></span>
+                                <span id="subNum" class="sub_num" @click="subNum(index)"></span>
+                            </div>
+                        </div>
+                    </li>
+    {#                小计#}
+                    <li class="compute">
+                        <p>[[cart.sku_amount_price]]</p>
+                    </li>
+    {#                操作#}
+                    <li class="operator" style="cursor: pointer">
+                        <a @click="del_cart(index)"><span>删除</span></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="cart_bar" id="cart_bar">
+            <div class="cart_bar_left" style="cursor: pointer">
+                <input type="checkbox" v-model="allSelected" @click="Aselected">
+                <label>全选</label>
+                <a href="javascript:void(0)" class="del_cart" @click="del_selected_cart">删除</a>
+                <a href="javascript:void(0)" class="clear_cart" @click="clear_cart">清空</a>
+            </div>
+            <div class="cart_bar_right">
+                <div class="cart_total">
+                    <span class="cart_count">共有件<em>[[total_selected_count]]</em>商品，总计</span>
+                    <span class="cart_price">￥[[total_selected_amount]]</span>
+                </div>
+                <div class="to_buy k" style="cursor: pointer" v-if="carts.length!=0">
+                    <a href="{{ url("orders:orderlist") }}" class="buy">去付款 ></a>
+                </div>
+                <div class="to_buy" style="cursor: pointer" v-else>
+                    <a href="javascript:void(0)" class="buy">去付款 ></a>
+                </div>
+            </div>
+        </div>
+    </div>
 	<div class="footer">
 		<div class="foot_link">
 			<a href="#">关于我们</a>
@@ -94,9 +167,12 @@
 	</div>
 	</div>
 	<script type="text/javascript">
-        let carts = {{ cart_skus | safe }};
+        let carts = {{ carts | safe }};
+        let cartLen = {{ cartLen }};
     </script>
+    <script type="text/javascript" src="{{ static('js/cartBalance.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 	<script type="text/javascript" src="{{ static('js/cart.js') }}"></script>
+
 </body>
 </html>
