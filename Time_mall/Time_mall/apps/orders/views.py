@@ -292,6 +292,7 @@ class DelOrderView(View):
 class OrderDetailView(View):
     def get(self,request,order_id):
         # order_id = request.GET.get("orderId")
+
         orderInfo_obj = OrderInfo.objects.get(order_id=order_id)
         order_status = OrderInfo.ORDER_STATUS_CHOICES[orderInfo_obj.status-1][1]
         order_time = str(orderInfo_obj.create_time)[0:str(orderInfo_obj.create_time).find('.')]
@@ -308,7 +309,7 @@ class OrderDetailView(View):
         address = {
             "receiver":receiver,
             "addr":addr,
-            "enail":email,
+            "enail":email or '',
             "phone":phone
         }
         ordergoods_query = orderInfo_obj.skus.all()
@@ -333,4 +334,5 @@ class OrderDetailView(View):
             "address":address,
             "sku":skus,
         }
+        print(context)
         return render(request,'order_detail.html',context)

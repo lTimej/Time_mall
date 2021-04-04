@@ -11,6 +11,7 @@ let vm = new Vue({
     },
     mounted(){
         this.getShotCutCarts();
+        console.log(this.address);
     },
     methods:{
         getShotCutCarts() {

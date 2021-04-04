@@ -5,17 +5,34 @@ from django.template import loader
 import os
 from django.conf import settings
 
-from contents.utils import get_category,get_contents
-from contents.models import ContentCategory
+from contents.utils import get_category, get_contents, get_data
+from contents.models import ContentCategory, AdCategory
+
 
 def get_static_page():
     #获取分类
-    categories = get_category()
-    contents = get_contents({})
-    # 构造上下文
+    goods = get_category()
+    obj = ContentCategory.objects.all()
+    contents = {}
+    for cc in obj:  # 一级标题
+        ct_obj = cc.content_set.all()
+        for content_obj in ct_obj:  # 二级标题
+            cc_title = cc.title
+            title = content_obj.title
+            price = content_obj.price
+            discountprice = content_obj.discountprice
+            image = content_obj.image
+            ad_id = cc.adCategory_id
+            ad_obj = AdCategory.objects.get(id=ad_id)
+            ad_title = ad_obj.title
+            get_data(cc_title, title, price, discountprice, image)
+    # 获取广告商品信息
+    get_contents(contents)
+    # 上下文
+    print(goods,contents)
     context = {
-        'categories': categories,
-        'contents': contents
+        'goods': goods,
+        "contents": contents
     }
 
     # 渲染模板

@@ -106,8 +106,17 @@ DATABASES = {
         'PORT': 3306,
         'USER': 'Time',
         'PASSWORD': 'liujun'
+    },
+    'slave': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'Time_mall',
+        'HOST': '127.0.0.1',
+        'PORT': 8306,
+        'USER': 'root',
+        'PASSWORD': 'liujun'
     }
 }
+DATABASE_ROUTERS = ['Time_mall.utils.db_router.MasterSlaveDBRouter']
 #Redis数据库
 CACHES = {
     "default": { # 默认的Redis配置项，采用0号Redis库。
