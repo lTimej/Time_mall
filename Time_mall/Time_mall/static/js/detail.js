@@ -29,13 +29,14 @@ let vm = new Vue({
         // // 获取热销商品数据
         // this.get_hot_skus();
         // // 记录分类商品的访问量
-		// this.goods_visit_count();
+		this.goods_visit_count();
         // // 保存用户浏览记录
 		// this.save_browse_histories();
 		// // 获取简单购物车数据
         this.getShotCutCarts()
         // // 获取商品评价信息
         // this.get_goods_comment();
+        // console.log(888888888,this.goods_detail);
     },
     watch: {
         // // 监听商品数量的变化
@@ -272,21 +273,21 @@ let vm = new Vue({
         },
         // // 记录分类商品的访问量
 		goods_visit_count(){
-        // 	// if (this.category_id) {
-        // 	// 	let url = '/detail/visit/' + this.category_id + '/';
-		// 	// 	axios.post(url, {}, {
-        //     //         headers: {
-        //     //             'X-CSRFToken':getCookie('csrftoken')
-        //     //         },
-        //     //         responseType: 'json'
-        //     //     })
-		// 	// 		.then(response => {
-		// 	// 			console.log(response.data);
-		// 	// 		})
-		// 	// 		.catch(error => {
-		// 	// 			console.log(error.response);
-		// 	// 		});
-		// 	// }
+        	if (this.goods_detail.category_id) {
+        		let url = '/goods/visit/' + this.goods_detail.category_id + '/';
+				axios.post(url, {}, {
+                    headers: {
+                        'X-CSRFToken':getCookie('csrftoken')
+                    },
+                    responseType: 'json'
+                })
+					.then(res => {
+						console.log(res.data);
+					})
+					.catch(error => {
+						console.log(error.response);
+					});
+			}
 		},
 		// // 保存用户浏览记录
 		save_browse_histories(){

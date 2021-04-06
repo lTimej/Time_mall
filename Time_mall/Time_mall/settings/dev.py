@@ -112,7 +112,7 @@ DATABASES = {
         'NAME': 'Time_mall',
         'HOST': '127.0.0.1',
         'PORT': 8306,
-        'USER': 'root',
+        'USER': 'Time',
         'PASSWORD': 'liujun'
     }
 }

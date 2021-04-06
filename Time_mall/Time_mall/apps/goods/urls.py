@@ -11,4 +11,6 @@ urlpatterns = [
     url(r'^sku/$', views.SkuView.as_view(),name='sku'),
     #热销
     url(r'^hot/(?P<category_id>\d+)/$',views.HotView.as_view(),name='hot'),
+    #商品访问量
+    url(r'^goods/visit/(?P<category_id>\d+)/$',views.GoodsVisitView.as_view(),name='visit'),
 ]

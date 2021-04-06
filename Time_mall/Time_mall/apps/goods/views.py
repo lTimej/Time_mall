@@ -1,13 +1,16 @@
-import json
+import datetime
+import json,logging
+
 
 from django import http
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
 from django.views import View
 from django.shortcuts import render
 from django_redis import get_redis_connection
 
-from goods.models import Spu,Sku,SpuSpecification,SpecificationOption,SkuSpecification
+from goods.models import Spu,Sku,SpuSpecification,SpecificationOption,SkuSpecification,GoodsCategory,CategoryVisit
 from goods.utils import get_spu, get_goods_category, get_pagination_data, get_sku, get_sku_image, get_detail_image, \
     get_img
 
@@ -15,6 +18,7 @@ from contents.utils import get_category
 
 from goods import constants
 
+logger = logging.getLogger('django')
 # Create your views here.
 #商品列表
 class GoodsListView(View):
@@ -72,7 +76,6 @@ class SkuView(View):
         flag = int(request.GET.get("flag"))
         context = get_img(spec_title,spec_id,spec_label,flag)
         return http.JsonResponse(context)
-
 #热销
 class HotView(View):
     def get(self,request,category_id):
@@ -91,4 +94,26 @@ class HotView(View):
             'hots':sku_hot,
         }
         return http.JsonResponse({"code":'ok','hots':sku_hot})
-
+class GoodsVisitView(View):
+    def post(self,request,category_id):
+        try:#验证category是否存在
+            goodsCategory_obj = GoodsCategory.objects.get(id=int(category_id))
+        except GoodsCategory.DoesNotExist:
+            return http.HttpResponseForbidden('缺少必传参数')
+        #获取本地时间
+        now = timezone.localdate()
+        now = "%d-%02d-%02d"%(now.year,now.month,now.day)
+        now = datetime.datetime.strptime(now, '%Y-%m-%d')
+        try:#查看数据库是否保存今日日期，保存查出那条记录
+            categoryVisit_obj = CategoryVisit.objects.get(date=now)
+        except:#没保存，新建
+            categoryVisit_obj = CategoryVisit()
+        try:#将访问记录写入数据库
+            categoryVisit_obj.category = goodsCategory_obj
+            categoryVisit_obj.count += 1
+            categoryVisit_obj.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError('服务器异常')
+        #响应
+        return http.JsonResponse({'code':'ok'})

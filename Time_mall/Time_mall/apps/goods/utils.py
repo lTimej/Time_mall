@@ -124,6 +124,7 @@ def get_sku(spu_id,detail_image,desc_dict):
         d[specs_list[index]] = goods_specs
     title = sku_obj.title
     price = sku_obj.price
+    category_id = sku_obj.category_id
     now_price = sku_obj.now_price
     default_image = sku_obj.default_image
     comments = sku_obj.comments
@@ -137,6 +138,7 @@ def get_sku(spu_id,detail_image,desc_dict):
     goods_detail['desc_dict'] = desc_dict
     goods_detail['spec_dict'] = spec_dict
     goods_detail['spu_id'] = spu_id
+    goods_detail['category_id'] = category_id
     goods_detail['comments'] = comments
     goods_detail['sales'] = sales
     return goods_detail,sku_obj.id
