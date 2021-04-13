@@ -15,6 +15,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import sys
+from datetime import datetime,timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,os.path.join(BASE_DIR,'apps'))
@@ -53,13 +54,16 @@ INSTALLED_APPS = [
     'payments',#支付功能
     'buys',#立即购买
     'django_crontab',#定时任务
+    'backend',#后台管理
+    'corsheaders',#同源策略
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',#跨请求管理sessions
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',#使用会话将用户与请求关联起来
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -255,7 +259,9 @@ LOGGING = {
 '''
 #用户认证模型类
 AUTH_USER_MODEL = 'users.User'
-AUTHENTICATION_BACKENDS = ['users.utils.MyAuthenticate']
+# AUTHENTICATION_BACKENDS = ['users.utils.MyAuthenticate']
+# 指定认证后端
+AUTHENTICATION_BACKENDS = ['Time_mall.utils.authentications.MeiduoModelBackend']
 
 #指定用户重定向地址
 LOGIN_URL = "/login"
@@ -271,7 +277,7 @@ CELERY_TASK_SERIALIZER = 'json'
 # QQ登录的配置参数
 QQ_CLIENT_ID = '101518219'
 QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
-QQ_REDIRECT_URI = 'http://192.168.1.132:8081/oauth_callback'
+QQ_REDIRECT_URI = 'http://192.168.1.146:8081/oauth_callback'
 
 # #配置邮件服务器
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # 导入邮件模块
@@ -282,11 +288,11 @@ EMAIL_HOST_PASSWORD = 'SFFGEWDKRPVFUMAQ' # 邮箱授权时获得的密码，非�
 EMAIL_FROM = 'liujun19950425@yeah.net' # 发件人抬头
 
 # 邮箱验证链接
-EMAIL_VERIFY_URL = 'http://192.168.1.132:8081/email/verify/'
+EMAIL_VERIFY_URL = 'http://192.168.1.146:8081/email/verify/'
 
 
-HTT = "http://192.168.1.132:8888/"
-HTTS = "http://192.168.1.132:8081/"
+HTT = "http://192.168.1.146:8888/"
+HTTS = "http://192.168.1.146:8081/"
 
 # 支付宝SDK配置参数
 
@@ -294,13 +300,13 @@ ALIPAY_APPID = '2016102600765516'
 ALIPAY_DEBUG = True
 ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
 # 验证回调
-ALIPAY_RETURN_URL = 'http://192.168.1.132:8081/payment/status/'
+ALIPAY_RETURN_URL = 'http://192.168.1.146:8081/payment/status/'
 
 # 指定自定义的Django文件存储类
 DEFAULT_FILE_STORAGE = 'Time_mall.Time_mall.utils.view.FastDFSStorage'
 
 # FastDFS相关参数
-FDFS_BASE_URL = 'http://192.168.1.132:8888/'
+FDFS_BASE_URL = 'http://192.168.1.146:8888/'
 
 # 定时器配置
 CRONJOBS = [
@@ -310,3 +316,25 @@ CRONJOBS = [
 
 # 指定中文编码格式
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+#同源
+# CORS
+CORS_ORIGIN_WHITELIST = (
+    'http://127.0.0.1:8080',
+    'http://localhost:8080',
+    'http://192.168.1.146:8080',
+    'http://127.0.0.1:8082',
+    'http://localhost:8082',
+    'http://192.168.1.146:8082',
+)
+CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
+#jwt配置
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+# JWT配置
+JWT_EXPIRATION_DELTA = 1,

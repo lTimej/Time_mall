@@ -38,4 +38,6 @@ urlpatterns = [
     url(r'^',include('payments.urls',namespace='payments')),
     #立即购买
     url(r'^',include('buys.urls',namespace='buys')),
+    #后台管理
+    url(r'^backend/',include('backend.urls')),
 ]
