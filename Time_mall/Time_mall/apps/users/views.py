@@ -146,7 +146,7 @@ class LoginView(View):
         if not re.match("^[0-9A-Za-z]{8,16}$",password):
             return http.HttpResponseForbidden("密码必须为8-16为")
         #用户名和密码校验
-        user = authenticate(username=username,password=password)
+        user = authenticate(request,username=username,password=password)
         #返回None，用户名或密码出错，重新返回到登录页面
         if not user:
             return render(request,"login.html",{"login_errmsg":"用户名或密码输入不正确"})
